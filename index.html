@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Control de Gastos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --fondo:#F3F5F2; --tinta:#121A15; --gris:#6A7570; --linea:#D9DFD9;
+    --verde:#14684A; --rojo:#B04430; --tarjeta:#FFFFFF; --suave:#EBEFEA;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--fondo); color:var(--tinta); font-family:'Archivo',sans-serif;}
+  .wrap{max-width:1120px; margin:0 auto; padding:26px 20px 70px;}
+  h1{font-weight:900; font-size:26px; letter-spacing:-.02em; margin:0;}
+  .label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--gris); font-weight:600;}
+  .mono{font-family:var(--mono);}
+  .card{background:var(--tarjeta); border:1px solid var(--linea); border-radius:12px; padding:20px;}
+  button{cursor:pointer; font-family:'Archivo',sans-serif;}
+  input,select{width:100%; padding:9px 10px; border:1px solid var(--linea); border-radius:6px;
+    font-size:14px; font-family:'Archivo',sans-serif; color:var(--tinta); background:#fff; outline:none;}
+  input:focus,select:focus{border-color:var(--verde);}
+  .chip{font-family:var(--mono); font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--linea); background:transparent; color:var(--gris); transition:all .15s;}
+  .chip.on{background:var(--tinta); color:#fff; border-color:var(--tinta);}
+  .tabbar{display:flex; gap:8px; margin-top:18px;}
+  .tab{flex:1; padding:11px; border-radius:10px; border:1px solid var(--linea); background:var(--tarjeta);
+    font-weight:700; font-size:14px; color:var(--gris);}
+  .tab.on{background:var(--tinta); color:#fff; border-color:var(--tinta);}
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-top:18px;}
+  .kpi .v{font-family:var(--mono); font-size:22px; font-weight:600; letter-spacing:-.02em; margin-top:6px;}
+  .kpi .d{font-family:var(--mono); font-size:12px; margin-top:4px;}
+  .grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; margin-top:18px;}
+  .chartbox{position:relative; height:280px; margin-top:12px;}
+  .fila{display:flex; align-items:center; gap:10px; padding:10px 2px; border-top:1px solid var(--suave);}
+  .fila .x{opacity:.35; border:none; background:transparent; color:var(--rojo); font-size:16px; padding:2px 6px;}
+  .fila:hover .x{opacity:1;}
+  .aviso{margin-top:12px; padding:10px 14px; border-radius:8px; background:#FBEDE9; color:var(--rojo); font-size:14px; display:none;}
+  .btn-verde{width:100%; padding:13px; border:none; border-radius:10px; background:var(--verde); color:#fff; font-weight:700; font-size:15px;}
+  .btn-tinta{width:100%; padding:12px; border:none; border-radius:8px; background:var(--tinta); color:#fff; font-weight:700; font-size:15px;}
+  .formgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-top:12px;}
+  .oculto{display:none !important;}
+  #login{max-width:380px; margin:12vh auto 0; display:flex; flex-direction:column; gap:14px;}
+  .pagos td{padding:7px 0; font-size:13.5px; border-top:1px solid var(--suave);}
+  .pagos{width:100%; border-collapse:collapse;}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login" class="wrap">
+  <h1>Control de gastos</h1>
+  <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+    <div>
+      <div class="label" style="margin-bottom:5px;">Email</div>
+      <input id="li-email" type="email" autocomplete="username" />
+    </div>
+    <div>
+      <div class="label" style="margin-bottom:5px;">Contraseña</div>
+      <input id="li-pass" type="password" autocomplete="current-password" />
+    </div>
+    <button class="btn-tinta" onclick="ingresar()">Ingresar</button>
+    <div id="li-error" style="color:var(--rojo); font-size:13.5px; display:none;"></div>
+  </div>
+  <div style="font-size:12.5px; color:var(--gris); line-height:1.5;">
+    El usuario se crea desde el panel de Supabase (Authentication → Users → Add user).
+    Si ves un error de configuración, revisá SUPABASE_URL y SUPABASE_ANON_KEY en index.html.
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app" class="wrap oculto">
+  <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
+    <h1>Control de gastos</h1>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span id="user-email" class="mono" style="font-size:12px; color:var(--gris);"></span>
+      <button class="chip" onclick="salir()">Salir</button>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab on" id="tab-reg" onclick="verTab('reg')">Registro</button>
+    <button class="tab" id="tab-dash" onclick="verTab('dash')">Comparativas</button>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <!-- ────── VISTA REGISTRO ────── -->
+  <div id="vista-reg">
+    <div id="mes-chips" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:18px;"></div>
+
+    <div class="kpis" id="kpis-reg"></div>
+
+    <button class="btn-verde" style="margin-top:18px;" onclick="toggleForm()">+ Registrar movimiento</button>
+
+    <div class="card oculto" id="form-card" style="margin-top:12px;">
+      <div class="formgrid">
+        <div><div class="label" style="margin-bottom:5px;">Fecha</div><input type="date" id="f-fecha" /></div>
+        <div><div class="label" style="margin-bottom:5px;">Tipo</div>
+          <select id="f-tipo" onchange="tipoCambio()"><option>Gasto</option><option>Ingreso</option></select></div>
+        <div id="f-crit-box"><div class="label" style="margin-bottom:5px;">Criterio</div><select id="f-criterio"></select></div>
+        <div><div class="label" style="margin-bottom:5px;">Monto</div>
+          <div style="display:flex; gap:6px;">
+            <select id="f-divisa" style="width:76px;"><option>$U</option><option>USD</option></select>
+            <input type="number" inputmode="decimal" id="f-monto" placeholder="0" class="mono" />
+          </div></div>
+        <div><div class="label" style="margin-bottom:5px;">Forma de pago</div><select id="f-pago"></select></div>
+        <div style="grid-column:1/-1;"><div class="label" style="margin-bottom:5px;">Aclaración (opcional)</div>
+          <input type="text" id="f-acl" placeholder="Ej: interno, alfajores, regalo…" /></div>
+        <button class="btn-tinta" style="grid-column:1/-1;" onclick="agregar()">Guardar movimiento</button>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="label" id="titulo-cat">Gastos por criterio</div>
+        <div id="barras-cat" style="margin-top:14px;"></div>
+        <div class="label" style="margin-top:22px;">Por forma de pago</div>
+        <table class="pagos" id="tabla-pagos" style="margin-top:8px;"></table>
+      </div>
+      <div class="card">
+        <div class="label" id="titulo-movs">Movimientos</div>
+        <div id="lista-movs" style="max-height:520px; overflow-y:auto; margin-top:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────── VISTA COMPARATIVAS ────── -->
+  <div id="vista-dash" class="oculto">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:18px;">
+      <div class="label">Mes en foco</div>
+      <select id="mes-foco" style="max-width:200px;" onchange="renderDash()"></select>
+    </div>
+
+    <div class="kpis" id="kpis-dash"></div>
+
+    <div class="grid2">
+      <div class="card" style="grid-column:1/-1;">
+        <div class="label">Gasto mensual por criterio (apilado)</div>
+        <div class="chartbox" style="height:320px;"><canvas id="ch-apilado"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="label">Flujo mensual: ingresos vs gastos</div>
+        <div class="chartbox"><canvas id="ch-flujo"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="label" id="lbl-dona">Distribución del mes</div>
+        <div class="chartbox"><canvas id="ch-dona"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="label" id="lbl-comp">Criterios: mes en foco vs anterior</div>
+        <div class="chartbox" style="height:320px;"><canvas id="ch-comp"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="label" id="lbl-acum">Gasto acumulado día a día</div>
+        <div class="chartbox" style="height:320px;"><canvas id="ch-acum"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   CONFIGURACIÓN — completar con los datos de tu proyecto Supabase
+   (Dashboard → Project Settings → API)
+   ════════════════════════════════════════════════════════════ */
+const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
+const SUPABASE_ANON_KEY = "TU_ANON_KEY";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const CATEGORIAS = ["Comida semanal","Comida finde/Gustos","Alcohol","Omnibus","Salud",
+  "Regalos","Ropa","Entrenamiento","Deuda mes anterior","Otros"];
+const FORMAS_PAGO = ["Debito ITAU","Debito SANTANDER","Debito PREX",
+  "Transferencia ITAU","Transferencia SANTANDER","Efectivo"];
+const MESES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+// Paleta fija por criterio (tonos de libreta contable)
+const COLOR_CAT = {
+  "Comida semanal":"#14684A", "Comida finde/Gustos":"#4C9B72", "Alcohol":"#8A6FB2",
+  "Omnibus":"#2E5F8A", "Salud":"#B04430", "Regalos":"#C98A2D", "Ropa":"#7A6A54",
+  "Entrenamiento":"#3E9C9C", "Deuda mes anterior":"#8C4A5E", "Otros":"#6A7570"
+};
+
+let movimientos = [];
+let mesSel = null;           // mes activo en vista Registro
+const charts = {};           // instancias Chart.js
+
+const $ = id => document.getElementById(id);
+const fmt = (n, div="$U") => (div==="USD"?"US$ ":"$ ") +
+  new Intl.NumberFormat("es-UY",{maximumFractionDigits:0}).format(Math.round(n));
+const mesKey = f => f.slice(0,7);
+const mesLabel = k => { const [y,m]=k.split("-"); return MESES_ES[+m-1]+" "+y; };
+const hoyISO = () => { const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const mesAnterior = k => { let [y,m]=k.split("-").map(Number); m--; if(m===0){m=12;y--;}
+  return `${y}-${String(m).padStart(2,"0")}`; };
+
+function avisar(msg){ const a=$("aviso"); a.textContent=msg; a.style.display="block";
+  setTimeout(()=>a.style.display="none",4000); }
+
+/* ─────────── Autenticación ─────────── */
+async function ingresar(){
+  const { error } = await sb.auth.signInWithPassword({
+    email: $("li-email").value.trim(), password: $("li-pass").value });
+  if(error){ const e=$("li-error"); e.textContent="No se pudo ingresar: "+error.message; e.style.display="block"; return; }
+  arrancar();
+}
+async function salir(){ await sb.auth.signOut(); location.reload(); }
+
+async function arrancar(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ $("login").classList.remove("oculto"); $("app").classList.add("oculto"); return; }
+  $("login").classList.add("oculto"); $("app").classList.remove("oculto");
+  $("user-email").textContent = session.user.email;
+  CATEGORIAS.forEach(c=>$("f-criterio").insertAdjacentHTML("beforeend",`<option>${c}</option>`));
+  FORMAS_PAGO.forEach(p=>$("f-pago").insertAdjacentHTML("beforeend",`<option>${p}</option>`));
+  $("f-fecha").value = hoyISO();
+  await cargar();
+}
+
+/* ─────────── Datos ─────────── */
+async function cargar(){
+  const { data, error } = await sb.from("movimientos").select("*").order("fecha",{ascending:true});
+  if(error){ avisar("Error al cargar datos: "+error.message); return; }
+  movimientos = data;
+  if(!mesSel) mesSel = mesKey(hoyISO());
+  renderTodo();
+}
+
+async function agregar(){
+  const monto = parseFloat(String($("f-monto").value).replace(",","."));
+  if(!$("f-fecha").value || !monto || monto<=0){ avisar("Ingresá una fecha y un monto mayor a cero."); return; }
+  const tipo = $("f-tipo").value;
+  const fila = {
+    fecha: $("f-fecha").value, tipo,
+    criterio: tipo==="Ingreso" ? null : $("f-criterio").value,
+    divisa: $("f-divisa").value, monto,
+    forma_pago: $("f-pago").value,
+    aclaracion: $("f-acl").value.trim() || null
+  };
+  const { error } = await sb.from("movimientos").insert(fila);
+  if(error){ avisar("No se pudo guardar: "+error.message); return; }
+  $("f-monto").value=""; $("f-acl").value="";
+  mesSel = mesKey(fila.fecha);
+  await cargar();
+}
+
+async function borrar(id){
+  const { error } = await sb.from("movimientos").delete().eq("id", id);
+  if(error){ avisar("No se pudo borrar: "+error.message); return; }
+  await cargar();
+}
+
+/* ─────────── Agregaciones ─────────── */
+function mesesDisponibles(){
+  const s = new Set(movimientos.map(m=>mesKey(m.fecha))); s.add(mesKey(hoyISO()));
+  return [...s].sort();
+}
+function delMes(k){ return movimientos.filter(m=>mesKey(m.fecha)===k && m.divisa==="$U"); }
+function resumenMes(k){
+  let ing=0, gas=0; const porCat={}, porPago={};
+  for(const m of delMes(k)){
+    const v = Number(m.monto);
+    if(m.tipo==="Ingreso") ing+=v;
+    else { gas+=v; porCat[m.criterio]=(porCat[m.criterio]||0)+v;
+           porPago[m.forma_pago]=(porPago[m.forma_pago]||0)+v; }
+  }
+  return { ing, gas, bal: ing-gas, porCat, porPago };
+}
+
+/* ─────────── Vista Registro ─────────── */
+function verTab(t){
+  $("tab-reg").classList.toggle("on", t==="reg");
+  $("tab-dash").classList.toggle("on", t==="dash");
+  $("vista-reg").classList.toggle("oculto", t!=="reg");
+  $("vista-dash").classList.toggle("oculto", t!=="dash");
+  if(t==="dash") renderDash();
+}
+function toggleForm(){ $("form-card").classList.toggle("oculto"); }
+function tipoCambio(){ $("f-crit-box").style.visibility =
+  $("f-tipo").value==="Ingreso" ? "hidden" : "visible"; }
+
+function renderTodo(){
+  // chips de mes
+  $("mes-chips").innerHTML = mesesDisponibles().map(k=>
+    `<button class="chip ${k===mesSel?"on":""}" onclick="mesSel='${k}';renderTodo()">${mesLabel(k)}</button>`).join("");
+
+  const r = resumenMes(mesSel);
+  const dias = new Set(delMes(mesSel).filter(m=>m.tipo==="Gasto").map(m=>m.fecha)).size || 1;
+  $("kpis-reg").innerHTML = kpiHTML([
+    {l:"Ingresos", v:"+"+fmt(r.ing), col:"var(--verde)"},
+    {l:"Gastos", v:"−"+fmt(r.gas), col:"var(--rojo)"},
+    {l:"Balance del mes", v:(r.bal>=0?"+":"−")+fmt(Math.abs(r.bal)), col:r.bal>=0?"var(--verde)":"var(--rojo)"},
+    {l:"Promedio por día con gasto", v:fmt(r.gas/dias), col:"var(--tinta)"},
+  ]);
+
+  // barras por criterio
+  $("titulo-cat").textContent = "Gastos por criterio · "+mesLabel(mesSel);
+  const cats = Object.entries(r.porCat).sort((a,b)=>b[1]-a[1]);
+  const max = cats.length ? cats[0][1] : 1;
+  $("barras-cat").innerHTML = cats.length ? cats.map(([c,v])=>`
+    <div style="margin-bottom:13px;">
+      <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:4px;">
+        <span style="font-weight:500;">${c}</span><span class="mono" style="font-weight:600;">${fmt(v)}</span>
+      </div>
+      <div style="height:5px; background:var(--suave); border-radius:3px;">
+        <div style="height:100%; width:${v/max*100}%; background:${COLOR_CAT[c]||"var(--tinta)"}; border-radius:3px;"></div>
+      </div>
+    </div>`).join("") :
+    `<div style="color:var(--gris); font-size:14px;">Todavía no hay gastos este mes.</div>`;
+
+  $("tabla-pagos").innerHTML = Object.entries(r.porPago).sort((a,b)=>b[1]-a[1]).map(([p,v])=>
+    `<tr><td style="color:var(--gris);">${p}</td>
+     <td class="mono" style="text-align:right; font-weight:600;">${fmt(v)}</td></tr>`).join("");
+
+  // lista movimientos
+  const lista = delMesTodasDivisas(mesSel).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  $("titulo-movs").textContent = "Movimientos · "+lista.length;
+  $("lista-movs").innerHTML = lista.length ? lista.map(m=>`
+    <div class="fila">
+      <div class="mono" style="font-size:12px; color:var(--gris); min-width:44px;">${m.fecha.slice(8,10)}/${m.fecha.slice(5,7)}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${m.tipo==="Ingreso"?"Ingreso":m.criterio}
+          ${m.aclaracion?`<span style="color:var(--gris); font-weight:400;"> · ${m.aclaracion}</span>`:""}
+        </div>
+        <div style="font-size:11.5px; color:var(--gris);">${m.forma_pago||""}</div>
+      </div>
+      <div class="mono" style="font-size:13.5px; font-weight:600; color:${m.tipo==="Ingreso"?"var(--verde)":"var(--tinta)"};">
+        ${m.tipo==="Ingreso"?"+":""}${fmt(m.monto, m.divisa)}</div>
+      <button class="x" title="Borrar" onclick="borrar('${m.id}')">×</button>
+    </div>`).join("") :
+    `<div style="color:var(--gris); font-size:14px; padding-top:8px;">Sin movimientos en ${mesLabel(mesSel)}.</div>`;
+
+  // selector de mes en foco del dashboard
+  const foco = $("mes-foco");
+  const prev = foco.value;
+  foco.innerHTML = mesesDisponibles().map(k=>`<option value="${k}">${mesLabel(k)}</option>`).join("");
+  foco.value = prev && [...foco.options].some(o=>o.value===prev) ? prev : mesSel;
+}
+function delMesTodasDivisas(k){ return movimientos.filter(m=>mesKey(m.fecha)===k); }
+
+function kpiHTML(items){
+  return items.map(k=>`
+    <div class="card kpi">
+      <div class="label">${k.l}</div>
+      <div class="v" style="color:${k.col};">${k.v}</div>
+      ${k.sub?`<div class="d" style="color:${k.subCol||"var(--gris)"};">${k.sub}</div>`:""}
+    </div>`).join("");
+}
+
+/* ─────────── Dashboard de comparativas ─────────── */
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = "#6A7570";
+
+function mkChart(id, cfg){
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id).getContext("2d"), cfg);
+}
+const ejeY = { ticks:{ callback:v=>"$"+new Intl.NumberFormat("es-UY").format(v) },
+  grid:{ color:"#EBEFEA" } };
+
+function renderDash(){
+  const foco = $("mes-foco").value;
+  const ant = mesAnterior(foco);
+  const meses = mesesDisponibles().filter(k=>delMes(k).length>0);
+  const rF = resumenMes(foco), rA = resumenMes(ant);
+
+  // KPIs con variación
+  const dGas = rA.gas>0 ? (rF.gas-rA.gas)/rA.gas*100 : null;
+  const ahorro = rF.ing>0 ? rF.bal/rF.ing*100 : null;
+  const topCat = Object.entries(rF.porCat).sort((a,b)=>b[1]-a[1])[0];
+  $("kpis-dash").innerHTML = kpiHTML([
+    {l:"Gastos · "+mesLabel(foco), v:fmt(rF.gas), col:"var(--rojo)",
+     sub: dGas===null?"sin mes anterior":(dGas>=0?"▲ +":"▼ ")+dGas.toFixed(1)+"% vs "+mesLabel(ant),
+     subCol: dGas===null?"var(--gris)":(dGas>=0?"var(--rojo)":"var(--verde)")},
+    {l:"Ingresos", v:fmt(rF.ing), col:"var(--verde)"},
+    {l:"Balance", v:(rF.bal>=0?"+":"−")+fmt(Math.abs(rF.bal)), col:rF.bal>=0?"var(--verde)":"var(--rojo)",
+     sub: ahorro===null?"":"tasa de ahorro "+ahorro.toFixed(0)+"%"},
+    {l:"Criterio principal", v: topCat?fmt(topCat[1]):"—", col:"var(--tinta)",
+     sub: topCat?topCat[0]:"sin gastos"},
+  ]);
+
+  $("lbl-dona").textContent = "Distribución · "+mesLabel(foco);
+  $("lbl-comp").textContent = "Criterios: "+mesLabel(foco)+" vs "+mesLabel(ant);
+  $("lbl-acum").textContent = "Gasto acumulado día a día · "+mesLabel(foco)+" vs "+mesLabel(ant);
+
+  /* 1 · Barras apiladas por mes y criterio */
+  const catsUsadas = CATEGORIAS.filter(c=>meses.some(k=>resumenMes(k).porCat[c]));
+  mkChart("ch-apilado", {
+    type:"bar",
+    data:{ labels: meses.map(mesLabel),
+      datasets: catsUsadas.map(c=>({
+        label:c, data: meses.map(k=>resumenMes(k).porCat[c]||0),
+        backgroundColor: COLOR_CAT[c], borderRadius:3, stack:"g" })) },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
+      scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, ...ejeY } } }
+  });
+
+  /* 2 · Línea ingresos vs gastos */
+  mkChart("ch-flujo", {
+    type:"line",
+    data:{ labels: meses.map(mesLabel),
+      datasets:[
+        { label:"Ingresos", data: meses.map(k=>resumenMes(k).ing),
+          borderColor:"#14684A", backgroundColor:"#14684A22", fill:true, tension:.3, pointRadius:4 },
+        { label:"Gastos", data: meses.map(k=>resumenMes(k).gas),
+          borderColor:"#B04430", backgroundColor:"#B0443022", fill:true, tension:.3, pointRadius:4 } ] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
+      scales:{ x:{ grid:{display:false} }, y: ejeY } }
+  });
+
+  /* 3 · Dona distribución del mes en foco */
+  const catsF = Object.entries(rF.porCat).sort((a,b)=>b[1]-a[1]);
+  mkChart("ch-dona", {
+    type:"doughnut",
+    data:{ labels: catsF.map(x=>x[0]),
+      datasets:[{ data: catsF.map(x=>x[1]),
+        backgroundColor: catsF.map(x=>COLOR_CAT[x[0]]||"#6A7570"), borderWidth:2, borderColor:"#fff" }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%",
+      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+        tooltip:{ callbacks:{ label: ctx=>{
+          const tot = catsF.reduce((s,x)=>s+x[1],0);
+          return ` ${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/tot*100).toFixed(1)}%)`; } } } } }
+  });
+
+  /* 4 · Barras horizontales: foco vs anterior por criterio */
+  const catsComp = CATEGORIAS.filter(c=>(rF.porCat[c]||0)>0 || (rA.porCat[c]||0)>0);
+  mkChart("ch-comp", {
+    type:"bar",
+    data:{ labels: catsComp,
+      datasets:[
+        { label: mesLabel(ant), data: catsComp.map(c=>rA.porCat[c]||0),
+          backgroundColor:"#C9D2CB", borderRadius:3 },
+        { label: mesLabel(foco), data: catsComp.map(c=>rF.porCat[c]||0),
+          backgroundColor:"#14684A", borderRadius:3 } ] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
+      scales:{ x:{ ...ejeY }, y:{ grid:{display:false}, ticks:{ font:{ family:"'Archivo'" } } } } }
+  });
+
+  /* 5 · Acumulado diario foco vs anterior */
+  const acum = k => {
+    const porDia = {}; let ultimo = 0;
+    for(const m of delMes(k)) if(m.tipo==="Gasto"){
+      const d = +m.fecha.slice(8,10);
+      porDia[d] = (porDia[d]||0)+Number(m.monto);
+      if(d>ultimo) ultimo = d;
+    }
+    // La serie llega hasta el último día con datos (o hasta hoy si es el mes en curso)
+    const hoy = hoyISO();
+    const tope = Math.max(ultimo, k===mesKey(hoy) ? +hoy.slice(8,10) : ultimo);
+    let s=0; const serie=[];
+    for(let d=1; d<=31; d++){
+      if(d<=tope){ s+=porDia[d]||0; serie.push(s); } else serie.push(null);
+    }
+    return serie;
+  };
+  mkChart("ch-acum", {
+    type:"line",
+    data:{ labels: Array.from({length:31},(_,i)=>i+1),
+      datasets:[
+        { label: mesLabel(ant), data: acum(ant), borderColor:"#9AA69E",
+          borderDash:[5,4], pointRadius:0, tension:.2 },
+        { label: mesLabel(foco), data: acum(foco), borderColor:"#121A15",
+          pointRadius:0, borderWidth:2.5, tension:.2 } ] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
+      scales:{ x:{ grid:{display:false}, title:{ display:true, text:"día del mes" } }, y: ejeY } }
+  });
+}
+
+/* ─────────── Inicio ─────────── */
+arrancar();
+$("li-pass").addEventListener("keydown", e=>{ if(e.key==="Enter") ingresar(); });
+</script>
+</body>
+</html>
