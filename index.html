@@ -47,8 +47,6 @@
   .formgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-top:12px;}
   .oculto{display:none !important;}
   #login{max-width:380px; margin:12vh auto 0; display:flex; flex-direction:column; gap:14px;}
-  .pagos td{padding:7px 0; font-size:13.5px; border-top:1px solid var(--suave);}
-  .pagos{width:100%; border-collapse:collapse;}
   @media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important;}}
 </style>
 </head>
@@ -112,7 +110,6 @@
             <select id="f-divisa" style="width:76px;"><option>$U</option><option>USD</option></select>
             <input type="number" inputmode="decimal" id="f-monto" placeholder="0" class="mono" />
           </div></div>
-        <div><div class="label" style="margin-bottom:5px;">Forma de pago</div><select id="f-pago"></select></div>
         <div style="grid-column:1/-1;"><div class="label" style="margin-bottom:5px;">Aclaración (opcional)</div>
           <input type="text" id="f-acl" placeholder="Ej: interno, alfajores, regalo…" /></div>
         <button class="btn-tinta" style="grid-column:1/-1;" onclick="agregar()">Guardar movimiento</button>
@@ -123,8 +120,6 @@
       <div class="card">
         <div class="label" id="titulo-cat">Gastos por categoría</div>
         <div id="barras-cat" style="margin-top:14px;"></div>
-        <div class="label" style="margin-top:22px;">Por forma de pago</div>
-        <table class="pagos" id="tabla-pagos" style="margin-top:8px;"></table>
       </div>
       <div class="card">
         <div class="label" id="titulo-movs">Movimientos</div>
@@ -199,8 +194,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_NEwAo74IEIklJNJRj6QHeA__HK18L0K";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const FORMAS_PAGO = ["Debito ITAU","Debito SANTANDER","Debito PREX",
-  "Transferencia ITAU","Transferencia SANTANDER","Efectivo"];
 const MESES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
 let movimientos = [];
@@ -249,7 +242,6 @@ async function arrancar(){
   if(!session){ $("login").classList.remove("oculto"); $("app").classList.add("oculto"); return; }
   $("login").classList.add("oculto"); $("app").classList.remove("oculto");
   $("user-email").textContent = session.user.email;
-  $("f-pago").innerHTML = FORMAS_PAGO.map(p=>`<option>${p}</option>`).join("");
   $("f-fecha").value = hoyISO();
   await cargar();
 }
@@ -285,7 +277,6 @@ async function agregar(){
     fecha: $("f-fecha").value, tipo,
     categoria_id: tipo==="Ingreso" ? null : $("f-criterio").value,
     divisa: $("f-divisa").value, monto,
-    forma_pago: $("f-pago").value,
     aclaracion: $("f-acl").value.trim() || null
   };
   const { error } = await sb.from("movimientos").insert(fila);
@@ -370,14 +361,13 @@ function delMes(k){ return movimientos.filter(m=>mesKey(m.fecha)===k && m.divisa
 function delMesTodasDivisas(k){ return movimientos.filter(m=>mesKey(m.fecha)===k); }
 
 function resumenMes(k){
-  let ing=0, gas=0; const porCat={}, porPago={};   // porCat: categoria_id → monto
+  let ing=0, gas=0; const porCat={};   // porCat: categoria_id → monto
   for(const m of delMes(k)){
     const v = Number(m.monto);
     if(m.tipo==="Ingreso") ing+=v;
-    else { gas+=v; porCat[m.categoria_id]=(porCat[m.categoria_id]||0)+v;
-           porPago[m.forma_pago]=(porPago[m.forma_pago]||0)+v; }
+    else { gas+=v; porCat[m.categoria_id]=(porCat[m.categoria_id]||0)+v; }
   }
-  return { ing, gas, bal: ing-gas, porCat, porPago };
+  return { ing, gas, bal: ing-gas, porCat };
 }
 
 /* ─────────── Navegación ─────────── */
@@ -420,10 +410,6 @@ function renderTodo(){
     </div>`).join("") :
     `<div style="color:var(--gris); font-size:14px;">Todavía no hay gastos este mes.</div>`;
 
-  $("tabla-pagos").innerHTML = Object.entries(r.porPago).sort((a,b)=>b[1]-a[1]).map(([p,v])=>
-    `<tr><td style="color:var(--gris);">${esc(p)}</td>
-     <td class="mono" style="text-align:right; font-weight:600;">${fmt(v)}</td></tr>`).join("");
-
   const lista = delMesTodasDivisas(mesSel).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   $("titulo-movs").textContent = "Movimientos · "+lista.length;
   $("lista-movs").innerHTML = lista.length ? lista.map(m=>`
@@ -434,9 +420,8 @@ function renderTodo(){
       <div style="flex:1; min-width:0;">
         <div style="font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
           ${m.tipo==="Ingreso"?"Ingreso":esc(catNombre(m.categoria_id))}
-          ${m.aclaracion?`<span style="color:var(--gris); font-weight:400;"> · ${esc(m.aclaracion)}</span>`:""}
         </div>
-        <div style="font-size:11.5px; color:var(--gris);">${esc(m.forma_pago)}</div>
+        ${m.aclaracion?`<div style="font-size:11.5px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.aclaracion)}</div>`:""}
       </div>
       <div class="mono" style="font-size:13.5px; font-weight:600; color:${m.tipo==="Ingreso"?"var(--verde)":"var(--tinta)"};">
         ${m.tipo==="Ingreso"?"+":""}${fmt(m.monto, m.divisa)}</div>
