@@ -1,0 +1,120 @@
+/* ═══════════════════════════════════════════════════════════
+   Control de Gastos — estilos (paleta y tipografía "v2 / Plata")
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  --fondo:#F4F2EB;        /* crema de fondo */
+  --tinta:#1E2A14;        /* verde muy oscuro, texto principal */
+  --gris:#807D6C;
+  --linea:#E5E2D4;        /* borde de tarjetas */
+  --borde-input:#D8D4C4;
+  --suave:#EDEADD;        /* pistas de barras y separadores */
+  --lima:#DCF14B;
+  --verde:#4C7A2F;
+  --rojo:#A65A3A;
+  --tarjeta:#FFFFFF;
+  --mono:'Space Mono',monospace;
+  --display:'Space Grotesk',sans-serif;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{margin:0; background:var(--fondo); color:var(--tinta); font-family:'Archivo',sans-serif;}
+a{color:var(--tinta);}
+a:hover{color:var(--verde);}
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-thumb{background:#DDD9C8; border-radius:10px; border:2px solid var(--fondo);}
+
+.wrap{max-width:1120px; margin:0 auto; padding:20px 20px 80px;}
+.oculto{display:none !important;}
+.mono{font-family:var(--mono);}
+.nota{font-size:13px; color:var(--gris); line-height:1.6;}
+
+/* ─────────── Encabezado (hero lima) ─────────── */
+.hero{background:var(--lima); border-radius:14px; padding:24px 28px 28px;}
+.hero-top{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
+.logo{width:58px; height:40px; object-fit:cover; display:block; max-width:100%;}
+.hero-user{display:flex; gap:14px; align-items:center;}
+.mono-mini{font-family:var(--mono); font-size:11.5px; color:var(--tinta); opacity:.7;}
+.hero-bottom{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-top:26px; flex-wrap:wrap;}
+.hero-title{font-family:var(--display); font-weight:700; font-size:clamp(38px,5.5vw,60px); letter-spacing:-.035em; line-height:.98;}
+.hero-badge{width:52px; height:52px; border-radius:50%; background:var(--tinta); color:var(--lima);
+  display:flex; align-items:center; justify-content:center; font-size:22px; flex:none;}
+
+.btn-salir{font-family:var(--mono); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  padding:8px 14px; border-radius:8px; border:1px solid var(--tinta); background:transparent; color:var(--tinta);
+  cursor:pointer; transition:all .15s;}
+.btn-salir:hover{background:var(--tinta); color:var(--lima);}
+
+/* ─────────── Tabs ─────────── */
+.tabbar{background:var(--tinta); border-radius:12px; margin-top:10px; display:flex;}
+.tab{flex:1; padding:16px 8px; border:none; background:transparent; font-family:var(--mono); font-size:12px;
+  font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:rgba(244,242,235,.55);
+  border-bottom:2px solid transparent; cursor:pointer; transition:color .15s;}
+.tab:first-child{border-radius:12px 0 0 12px;}
+.tab:last-child{border-radius:0 12px 12px 0;}
+.tab.on{color:var(--lima); border-bottom-color:var(--lima);}
+
+/* ─────────── Chips de mes / estado ─────────── */
+.chips{display:flex; gap:8px; flex-wrap:wrap;}
+.chip{font-family:var(--mono); font-size:12px; font-weight:700; white-space:nowrap; padding:8px 16px;
+  border-radius:8px; border:1px solid var(--tinta); background:transparent; color:var(--tinta);
+  cursor:pointer; transition:all .15s;}
+.chip:hover, .chip.on{background:var(--tinta); color:var(--lima);}
+.chip.mini{font-size:11px; padding:7px 14px; text-transform:uppercase; letter-spacing:.06em;}
+
+/* ─────────── Tarjetas y títulos ─────────── */
+.card{background:var(--tarjeta); border:1px solid var(--linea); border-radius:12px; padding:22px;}
+.card-title{font-family:var(--display); font-weight:700; font-size:17px; letter-spacing:-.01em;}
+.section-title{font-family:var(--display); font-weight:700; font-size:18px; letter-spacing:-.01em;}
+.label{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--gris); font-weight:700;}
+
+/* ─────────── KPIs: una tarjeta dividida en columnas ─────────── */
+.kpis{background:var(--tarjeta); border:1px solid var(--linea); border-radius:12px; margin-top:18px;
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); overflow:hidden;}
+.kpi{padding:20px 22px; border-left:1px solid var(--linea); margin-left:-1px;}
+.kpi .v{font-family:var(--display); font-size:28px; font-weight:700; letter-spacing:-.02em; margin-top:8px;}
+.kpi .d{font-family:var(--mono); font-size:11.5px; margin-top:4px;}
+
+/* ─────────── Botones ─────────── */
+button{font-family:'Archivo',sans-serif;}
+.btn-lima{width:100%; padding:15px; border:none; border-radius:10px; background:var(--lima); color:var(--tinta);
+  font-weight:700; font-size:16px; font-family:var(--display); cursor:pointer; transition:all .15s;}
+.btn-lima:hover{background:var(--tinta); color:var(--lima);}
+.btn-tinta{padding:14px; border:none; border-radius:10px; background:var(--tinta); color:var(--lima);
+  font-weight:700; font-size:15px; font-family:var(--display); cursor:pointer; transition:background .15s;}
+.btn-tinta:hover{background:#2E401F;}
+
+/* ─────────── Formularios ─────────── */
+input,select{width:100%; padding:11px 12px; border:1px solid var(--borde-input); border-radius:8px;
+  font-size:14px; font-family:'Archivo',sans-serif; background:var(--fondo); outline:none; color:var(--tinta);}
+input:focus,select:focus{border-color:var(--verde);}
+input[type=color]{padding:3px; height:42px; cursor:pointer; background:#fff;}
+.cat-color{width:44px; height:36px; flex:none; border-radius:8px;}
+.formgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px;}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-top:18px;}
+.chartbox{position:relative; height:280px; margin-top:14px;}
+.foco-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:22px;}
+
+/* ─────────── Filas de listas (movimientos / categorías) ─────────── */
+.fila{display:flex; align-items:center; gap:12px; padding:11px 2px; border-top:1px solid var(--suave);}
+.fila .x{opacity:.35; border:none; background:transparent; color:var(--rojo); font-size:16px;
+  padding:2px 6px; cursor:pointer;}
+.fila:hover .x{opacity:1;}
+.dot{width:10px; height:10px; border-radius:50%; flex:none;}
+
+/* ─────────── Barras por categoría ─────────── */
+.bar-track{height:8px; background:var(--suave); border-radius:4px; overflow:hidden;}
+.bar-fill{height:100%; border-radius:4px;}
+
+/* ─────────── Avisos ─────────── */
+.aviso{margin-top:12px; padding:10px 14px; border-radius:8px; background:#F1E1D6; color:var(--rojo);
+  font-size:14px; display:none;}
+
+/* ─────────── Login ─────────── */
+#login{max-width:420px; margin:10vh auto 0; padding:24px 20px; display:flex; flex-direction:column; gap:16px;}
+.brand-card{background:var(--lima); border-radius:14px; padding:26px;}
+.brand-title{font-family:var(--display); font-weight:700; font-size:38px; letter-spacing:-.03em;
+  margin-top:14px; line-height:1.02;}
+.login-card{display:flex; flex-direction:column; gap:16px; padding:24px;}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important;}}

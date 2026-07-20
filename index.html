@@ -5,69 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Control de Gastos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./styles.css" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  :root{
-    --fondo:#F3F5F2; --tinta:#121A15; --gris:#6A7570; --linea:#D9DFD9;
-    --verde:#14684A; --rojo:#B04430; --tarjeta:#FFFFFF; --suave:#EBEFEA;
-    --mono:'IBM Plex Mono',monospace;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  body{margin:0; background:var(--fondo); color:var(--tinta); font-family:'Archivo',sans-serif;}
-  .wrap{max-width:1120px; margin:0 auto; padding:26px 20px 70px;}
-  h1{font-weight:900; font-size:26px; letter-spacing:-.02em; margin:0;}
-  .label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--gris); font-weight:600;}
-  .mono{font-family:var(--mono);}
-  .card{background:var(--tarjeta); border:1px solid var(--linea); border-radius:12px; padding:20px;}
-  button{cursor:pointer; font-family:'Archivo',sans-serif;}
-  input,select{width:100%; padding:9px 10px; border:1px solid var(--linea); border-radius:6px;
-    font-size:14px; font-family:'Archivo',sans-serif; color:var(--tinta); background:#fff; outline:none;}
-  input:focus,select:focus{border-color:var(--verde);}
-  input[type=color]{padding:2px; height:38px; cursor:pointer;}
-  .chip{font-family:var(--mono); font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px;
-    border:1px solid var(--linea); background:transparent; color:var(--gris); transition:all .15s; white-space:nowrap;}
-  .chip.on{background:var(--tinta); color:#fff; border-color:var(--tinta);}
-  .tabbar{display:flex; gap:8px; margin-top:18px;}
-  .tab{flex:1; padding:11px; border-radius:10px; border:1px solid var(--linea); background:var(--tarjeta);
-    font-weight:700; font-size:14px; color:var(--gris);}
-  .tab.on{background:var(--tinta); color:#fff; border-color:var(--tinta);}
-  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-top:18px;}
-  .kpi .v{font-family:var(--mono); font-size:22px; font-weight:600; letter-spacing:-.02em; margin-top:6px;}
-  .kpi .d{font-family:var(--mono); font-size:12px; margin-top:4px;}
-  .grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; margin-top:18px;}
-  .chartbox{position:relative; height:280px; margin-top:12px;}
-  .fila{display:flex; align-items:center; gap:10px; padding:10px 2px; border-top:1px solid var(--suave);}
-  .fila .x{opacity:.35; border:none; background:transparent; color:var(--rojo); font-size:16px; padding:2px 6px;}
-  .fila:hover .x{opacity:1;}
-  .aviso{margin-top:12px; padding:10px 14px; border-radius:8px; background:#FBEDE9; color:var(--rojo); font-size:14px; display:none;}
-  .btn-verde{width:100%; padding:13px; border:none; border-radius:10px; background:var(--verde); color:#fff; font-weight:700; font-size:15px;}
-  .btn-tinta{width:100%; padding:12px; border:none; border-radius:8px; background:var(--tinta); color:#fff; font-weight:700; font-size:15px;}
-  .formgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-top:12px;}
-  .oculto{display:none !important;}
-  #login{max-width:380px; margin:12vh auto 0; display:flex; flex-direction:column; gap:14px;}
-  @media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important;}}
-</style>
 </head>
 <body>
 
 <!-- ══════════ LOGIN ══════════ -->
-<div id="login" class="wrap">
-  <h1>Control de gastos</h1>
-  <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+<div id="login">
+  <div class="brand-card">
+    <img src="./whatsapp-image-2026-07-18-at-21-43-24-mrr2tgct-iaeb.jpeg" alt="Logo" class="logo" />
+    <div class="brand-title">Control de gastos</div>
+  </div>
+  <div class="card login-card">
     <div>
-      <div class="label" style="margin-bottom:5px;">Email</div>
+      <div class="label" style="margin-bottom:6px;">Email</div>
       <input id="li-email" type="email" autocomplete="username" />
     </div>
     <div>
-      <div class="label" style="margin-bottom:5px;">Contraseña</div>
+      <div class="label" style="margin-bottom:6px;">Contraseña</div>
       <input id="li-pass" type="password" autocomplete="current-password" />
     </div>
-    <button class="btn-tinta" onclick="ingresar()">Ingresar</button>
+    <button class="btn-lima" onclick="ingresar()">Ingresar →</button>
     <div id="li-error" style="color:var(--rojo); font-size:13.5px; display:none;"></div>
   </div>
-  <div style="font-size:12.5px; color:var(--gris); line-height:1.5;">
+  <div class="nota">
     Los usuarios se crean desde el panel de Supabase (Authentication → Users → Add user).
     Cada usuario ve únicamente sus propios datos.
   </div>
@@ -75,11 +39,17 @@
 
 <!-- ══════════ APP ══════════ -->
 <div id="app" class="wrap oculto">
-  <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
-    <h1>Control de gastos</h1>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <span id="user-email" class="mono" style="font-size:12px; color:var(--gris);"></span>
-      <button class="chip" onclick="salir()">Salir</button>
+  <div class="hero">
+    <div class="hero-top">
+      <img src="./whatsapp-image-2026-07-18-at-21-43-24-mrr2tgct-iaeb.jpeg" alt="Logo" class="logo" />
+      <div class="hero-user">
+        <span id="user-email" class="mono-mini"></span>
+        <button class="btn-salir" onclick="salir()">Salir</button>
+      </div>
+    </div>
+    <div class="hero-bottom">
+      <div class="hero-title">Control<br>de gastos</div>
+      <div class="hero-badge">↗</div>
     </div>
   </div>
 
@@ -93,24 +63,24 @@
 
   <!-- ────── VISTA REGISTRO ────── -->
   <div id="vista-reg">
-    <div id="mes-chips" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:18px;"></div>
+    <div id="mes-chips" class="chips" style="margin-top:22px;"></div>
 
     <div class="kpis" id="kpis-reg"></div>
 
-    <button class="btn-verde" style="margin-top:18px;" onclick="toggleForm()">+ Registrar movimiento</button>
+    <button class="btn-lima" style="margin-top:18px;" onclick="toggleForm()">+ Registrar movimiento</button>
 
     <div class="card oculto" id="form-card" style="margin-top:12px;">
       <div class="formgrid">
-        <div><div class="label" style="margin-bottom:5px;">Fecha</div><input type="date" id="f-fecha" /></div>
-        <div><div class="label" style="margin-bottom:5px;">Tipo</div>
+        <div><div class="label" style="margin-bottom:6px;">Fecha</div><input type="date" id="f-fecha" /></div>
+        <div><div class="label" style="margin-bottom:6px;">Tipo</div>
           <select id="f-tipo" onchange="tipoCambio()"><option>Gasto</option><option>Ingreso</option></select></div>
-        <div id="f-crit-box"><div class="label" style="margin-bottom:5px;">Categoría</div><select id="f-criterio"></select></div>
-        <div><div class="label" style="margin-bottom:5px;">Monto</div>
+        <div id="f-crit-box"><div class="label" style="margin-bottom:6px;">Categoría</div><select id="f-criterio"></select></div>
+        <div><div class="label" style="margin-bottom:6px;">Monto</div>
           <div style="display:flex; gap:6px;">
-            <select id="f-divisa" style="width:76px;"><option>$U</option><option>USD</option></select>
+            <select id="f-divisa" style="width:80px;"><option>$U</option><option>USD</option></select>
             <input type="number" inputmode="decimal" id="f-monto" placeholder="0" class="mono" />
           </div></div>
-        <div style="grid-column:1/-1;"><div class="label" style="margin-bottom:5px;">Aclaración (opcional)</div>
+        <div style="grid-column:1/-1;"><div class="label" style="margin-bottom:6px;">Aclaración (opcional)</div>
           <input type="text" id="f-acl" placeholder="Ej: interno, alfajores, regalo…" /></div>
         <button class="btn-tinta" style="grid-column:1/-1;" onclick="agregar()">Guardar movimiento</button>
       </div>
@@ -118,44 +88,44 @@
 
     <div class="grid2">
       <div class="card">
-        <div class="label" id="titulo-cat">Gastos por categoría</div>
-        <div id="barras-cat" style="margin-top:14px;"></div>
+        <div class="card-title" id="titulo-cat">Gastos por categoría</div>
+        <div id="barras-cat" style="margin-top:16px;"></div>
       </div>
       <div class="card">
-        <div class="label" id="titulo-movs">Movimientos</div>
-        <div id="lista-movs" style="max-height:520px; overflow-y:auto; margin-top:6px;"></div>
+        <div class="card-title" id="titulo-movs">Movimientos</div>
+        <div id="lista-movs" style="max-height:480px; overflow-y:auto; margin-top:10px;"></div>
       </div>
     </div>
   </div>
 
   <!-- ────── VISTA COMPARATIVAS ────── -->
   <div id="vista-dash" class="oculto">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:18px;">
-      <div class="label">Mes en foco</div>
-      <select id="mes-foco" style="max-width:200px;" onchange="renderDash()"></select>
+    <div class="foco-row">
+      <div class="section-title">Mes en foco</div>
+      <div id="mes-foco-chips" class="chips"></div>
     </div>
 
     <div class="kpis" id="kpis-dash"></div>
 
     <div class="grid2">
       <div class="card" style="grid-column:1/-1;">
-        <div class="label">Gasto mensual por categoría (apilado)</div>
+        <div class="card-title">Gasto mensual por categoría</div>
         <div class="chartbox" style="height:320px;"><canvas id="ch-apilado"></canvas></div>
       </div>
       <div class="card">
-        <div class="label">Flujo mensual: ingresos vs gastos</div>
+        <div class="card-title">Ingresos vs gastos</div>
         <div class="chartbox"><canvas id="ch-flujo"></canvas></div>
       </div>
       <div class="card">
-        <div class="label" id="lbl-dona">Distribución del mes</div>
+        <div class="card-title" id="lbl-dona">Distribución del mes</div>
         <div class="chartbox"><canvas id="ch-dona"></canvas></div>
       </div>
       <div class="card">
-        <div class="label" id="lbl-comp">Categorías: mes en foco vs anterior</div>
+        <div class="card-title" id="lbl-comp">Categorías: mes en foco vs anterior</div>
         <div class="chartbox" style="height:320px;"><canvas id="ch-comp"></canvas></div>
       </div>
       <div class="card">
-        <div class="label" id="lbl-acum">Gasto acumulado día a día</div>
+        <div class="card-title" id="lbl-acum">Gasto acumulado día a día</div>
         <div class="chartbox" style="height:320px;"><canvas id="ch-acum"></canvas></div>
       </div>
     </div>
@@ -163,18 +133,18 @@
 
   <!-- ────── VISTA CATEGORÍAS ────── -->
   <div id="vista-cats" class="oculto">
-    <div class="card" style="margin-top:18px;">
-      <div class="label">Nueva categoría</div>
-      <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
-        <input type="color" id="nc-color" value="#14684A" style="width:52px; flex:none;" />
+    <div class="card" style="margin-top:22px;">
+      <div class="card-title">Nueva categoría</div>
+      <div style="display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center;">
+        <input type="color" id="nc-color" value="#7FA03F" style="width:50px; flex:none;" />
         <input type="text" id="nc-nombre" placeholder="Nombre de la categoría" style="flex:1; min-width:180px;" />
-        <button class="btn-tinta" style="width:auto; padding:9px 22px; flex:none;" onclick="crearCat()">Crear</button>
+        <button class="btn-tinta" style="width:auto; padding:11px 26px; flex:none;" onclick="crearCat()">Crear</button>
       </div>
     </div>
 
-    <div class="card" style="margin-top:18px;">
-      <div class="label" style="margin-bottom:6px;">Tus categorías</div>
-      <div style="font-size:12.5px; color:var(--gris); margin-bottom:8px;">
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Tus categorías</div>
+      <div class="nota" style="margin:8px 0 6px;">
         Los cambios de nombre y color se guardan solos al salir del campo y se aplican a todo el historial.
         Una categoría oculta desaparece del formulario pero conserva sus movimientos.
         Solo se puede eliminar una categoría que nunca se usó.
@@ -196,9 +166,13 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const MESES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
+/* Paleta compartida con styles.css (para Chart.js) */
+const INK = "#1E2A14", LIMA = "#DCF14B", VERDE = "#4C7A2F", ROJO = "#A65A3A", GRIS = "#807D6C";
+
 let movimientos = [];
 let categorias = [];         // [{id, nombre, color, activa, orden}]
 let mesSel = null;
+let mesFoco = null;
 const charts = {};
 
 const $ = id => document.getElementById(id);
@@ -213,7 +187,7 @@ const mesAnterior = k => { let [y,m]=k.split("-").map(Number); m--; if(m===0){m=
 
 const catDe = id => categorias.find(c=>c.id===id);
 const catNombre = id => (catDe(id)||{}).nombre || "Sin categoría";
-const catColor = id => (catDe(id)||{}).color || "#6A7570";
+const catColor = id => (catDe(id)||{}).color || "#8A8471";
 
 function avisar(msg){ const a=$("aviso"); a.textContent=msg; a.style.display="block";
   setTimeout(()=>a.style.display="none",4500); }
@@ -337,14 +311,14 @@ function renderCats(){
     usoPorCat[m.categoria_id] = (usoPorCat[m.categoria_id]||0)+1;
 
   $("lista-cats").innerHTML = categorias.map(c=>`
-    <div class="fila" style="gap:12px;">
-      <input type="color" value="${c.color}" style="width:44px; flex:none;"
+    <div class="fila" style="padding:12px 2px;">
+      <input type="color" value="${c.color}" class="cat-color"
         onchange="updCat('${c.id}','color',this.value)" title="Color" />
       <input type="text" value="${esc(c.nombre)}" style="flex:1; min-width:120px; ${c.activa?"":"opacity:.45; text-decoration:line-through;"}"
         onchange="updCat('${c.id}','nombre',this.value)" />
-      <span class="mono" style="font-size:11.5px; color:var(--gris); flex:none; min-width:78px; text-align:right;">
+      <span class="mono" style="font-size:11.5px; color:var(--gris); flex:none; min-width:70px; text-align:right;">
         ${usoPorCat[c.id]||0} mov.</span>
-      <button class="chip ${c.activa?"on":""}" style="flex:none;"
+      <button class="chip mini ${c.activa?"on":""}" style="flex:none;"
         onclick="updCat('${c.id}','activa',${!c.activa})">${c.activa?"Visible":"Oculta"}</button>
       <button class="x" style="flex:none; ${usoPorCat[c.id]?"visibility:hidden;":""}" title="Eliminar (solo si nunca se usó)"
         onclick="delCat('${c.id}')">×</button>
@@ -400,12 +374,12 @@ function renderTodo(){
   const cats = Object.entries(r.porCat).sort((a,b)=>b[1]-a[1]);
   const max = cats.length ? cats[0][1] : 1;
   $("barras-cat").innerHTML = cats.length ? cats.map(([cid,v])=>`
-    <div style="margin-bottom:13px;">
-      <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:4px;">
-        <span style="font-weight:500;">${esc(catNombre(cid))}</span><span class="mono" style="font-weight:600;">${fmt(v)}</span>
+    <div style="margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px;">
+        <span style="font-weight:500;">${esc(catNombre(cid))}</span><span class="mono" style="font-weight:700; font-size:13px;">${fmt(v)}</span>
       </div>
-      <div style="height:5px; background:var(--suave); border-radius:3px;">
-        <div style="height:100%; width:${v/max*100}%; background:${catColor(cid)}; border-radius:3px;"></div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${v/max*100}%; background:${catColor(cid)};"></div>
       </div>
     </div>`).join("") :
     `<div style="color:var(--gris); font-size:14px;">Todavía no hay gastos este mes.</div>`;
@@ -414,30 +388,24 @@ function renderTodo(){
   $("titulo-movs").textContent = "Movimientos · "+lista.length;
   $("lista-movs").innerHTML = lista.length ? lista.map(m=>`
     <div class="fila">
-      <div class="mono" style="font-size:12px; color:var(--gris); min-width:44px;">${m.fecha.slice(8,10)}/${m.fecha.slice(5,7)}</div>
-      <span style="width:8px; height:8px; border-radius:50%; flex:none;
-        background:${m.tipo==="Ingreso"?"var(--verde)":catColor(m.categoria_id)};"></span>
+      <div class="mono" style="font-size:11.5px; color:var(--gris); min-width:42px;">${m.fecha.slice(8,10)}/${m.fecha.slice(5,7)}</div>
+      <span class="dot" style="background:${m.tipo==="Ingreso"?"var(--verde)":catColor(m.categoria_id)};"></span>
       <div style="flex:1; min-width:0;">
-        <div style="font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        <div style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
           ${m.tipo==="Ingreso"?"Ingreso":esc(catNombre(m.categoria_id))}
         </div>
-        ${m.aclaracion?`<div style="font-size:11.5px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.aclaracion)}</div>`:""}
+        ${m.aclaracion?`<div style="font-size:12px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.aclaracion)}</div>`:""}
       </div>
-      <div class="mono" style="font-size:13.5px; font-weight:600; color:${m.tipo==="Ingreso"?"var(--verde)":"var(--tinta)"};">
+      <div class="mono" style="font-size:13.5px; font-weight:700; color:${m.tipo==="Ingreso"?"var(--verde)":"var(--tinta)"};">
         ${m.tipo==="Ingreso"?"+":""}${fmt(m.monto, m.divisa)}</div>
       <button class="x" title="Borrar" onclick="borrar('${m.id}')">×</button>
     </div>`).join("") :
     `<div style="color:var(--gris); font-size:14px; padding-top:8px;">Sin movimientos en ${mesLabel(mesSel)}.</div>`;
-
-  const foco = $("mes-foco");
-  const prev = foco.value;
-  foco.innerHTML = mesesDisponibles().map(k=>`<option value="${k}">${mesLabel(k)}</option>`).join("");
-  foco.value = prev && [...foco.options].some(o=>o.value===prev) ? prev : mesSel;
 }
 
 function kpiHTML(items){
   return items.map(k=>`
-    <div class="card kpi">
+    <div class="kpi">
       <div class="label">${k.l}</div>
       <div class="v" style="color:${k.col};">${k.v}</div>
       ${k.sub?`<div class="d" style="color:${k.subCol||"var(--gris)"};">${k.sub}</div>`:""}
@@ -447,9 +415,9 @@ function kpiHTML(items){
 /* ─────────── Dashboard de comparativas ─────────── */
 const hayChart = typeof Chart !== "undefined";
 if(hayChart){
-  Chart.defaults.font.family = "'IBM Plex Mono', monospace";
-  Chart.defaults.font.size = 11;
-  Chart.defaults.color = "#6A7570";
+  Chart.defaults.font.family = "'Space Mono', monospace";
+  Chart.defaults.font.size = 10.5;
+  Chart.defaults.color = GRIS;
 }
 
 function mkChart(id, cfg){
@@ -457,16 +425,23 @@ function mkChart(id, cfg){
   charts[id] = new Chart($(id).getContext("2d"), cfg);
 }
 const ejeY = () => ({ ticks:{ callback:v=>"$"+new Intl.NumberFormat("es-UY").format(v) },
-  grid:{ color:"#EBEFEA" } });
+  grid:{ color:"#EDEADD" } });
+const legenda = () => ({ position:"bottom", labels:{ boxWidth:10, boxHeight:10,
+  font:{ family:"'Archivo'", size:12 } } });
 
 function renderDash(){
   if(!hayChart){
     avisar("No se pudo cargar la librería de gráficos (Chart.js). Revisá tu conexión a internet y recargá la página.");
     return;
   }
-  const foco = $("mes-foco").value;
+  const mesesTodos = mesesDisponibles();
+  if(!mesFoco || !mesesTodos.includes(mesFoco)) mesFoco = mesSel;
+  $("mes-foco-chips").innerHTML = mesesTodos.map(k=>
+    `<button class="chip ${k===mesFoco?"on":""}" onclick="mesFoco='${k}';renderDash()">${mesLabel(k)}</button>`).join("");
+
+  const foco = mesFoco;
   const ant = mesAnterior(foco);
-  const meses = mesesDisponibles().filter(k=>delMes(k).length>0);
+  const meses = mesesTodos.filter(k=>delMes(k).length>0);
   const resPorMes = Object.fromEntries(meses.map(k=>[k, resumenMes(k)]));
   const rF = resPorMes[foco] || resumenMes(foco);
   const rA = resPorMes[ant]  || resumenMes(ant);
@@ -498,7 +473,7 @@ function renderDash(){
         label:c.nombre, data: meses.map(k=>resPorMes[k].porCat[c.id]||0),
         backgroundColor: c.color, borderRadius:3, stack:"g" })) },
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+      plugins:{ legend: legenda(),
         tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
       scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, ...ejeY() } } }
   });
@@ -509,11 +484,11 @@ function renderDash(){
     data:{ labels: meses.map(mesLabel),
       datasets:[
         { label:"Ingresos", data: meses.map(k=>resPorMes[k].ing),
-          borderColor:"#14684A", backgroundColor:"#14684A22", fill:true, tension:.3, pointRadius:4 },
+          borderColor:VERDE, backgroundColor:VERDE+"22", fill:true, tension:.3, pointRadius:4, borderWidth:2.5 },
         { label:"Gastos", data: meses.map(k=>resPorMes[k].gas),
-          borderColor:"#B04430", backgroundColor:"#B0443022", fill:true, tension:.3, pointRadius:4 } ] },
+          borderColor:ROJO, backgroundColor:ROJO+"22", fill:true, tension:.3, pointRadius:4, borderWidth:2.5 } ] },
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+      plugins:{ legend: legenda(),
         tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
       scales:{ x:{ grid:{display:false} }, y: ejeY() } }
   });
@@ -525,8 +500,8 @@ function renderDash(){
     data:{ labels: catsF.map(x=>catNombre(x[0])),
       datasets:[{ data: catsF.map(x=>x[1]),
         backgroundColor: catsF.map(x=>catColor(x[0])), borderWidth:2, borderColor:"#fff" }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%",
-      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:"60%",
+      plugins:{ legend: legenda(),
         tooltip:{ callbacks:{ label: ctx=>{
           const tot = catsF.reduce((s,x)=>s+x[1],0);
           return ` ${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/tot*100).toFixed(1)}%)`; } } } } }
@@ -539,13 +514,13 @@ function renderDash(){
     data:{ labels: catsComp.map(c=>c.nombre),
       datasets:[
         { label: mesLabel(ant), data: catsComp.map(c=>rA.porCat[c.id]||0),
-          backgroundColor:"#C9D2CB", borderRadius:3 },
+          backgroundColor:"#D5CFBD", borderRadius:3 },
         { label: mesLabel(foco), data: catsComp.map(c=>rF.porCat[c.id]||0),
-          backgroundColor:"#14684A", borderRadius:3 } ] },
+          backgroundColor:INK, borderRadius:3 } ] },
     options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+      plugins:{ legend: legenda(),
         tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
-      scales:{ x:{ ...ejeY() }, y:{ grid:{display:false}, ticks:{ font:{ family:"'Archivo'" } } } } }
+      scales:{ x:{ ...ejeY() }, y:{ grid:{display:false}, ticks:{ font:{ family:"'Archivo'", size:12 } } } } }
   });
 
   /* 5 · Acumulado diario foco vs anterior */
@@ -568,12 +543,12 @@ function renderDash(){
     type:"line",
     data:{ labels: Array.from({length:31},(_,i)=>i+1),
       datasets:[
-        { label: mesLabel(ant), data: acum(ant), borderColor:"#9AA69E",
-          borderDash:[5,4], pointRadius:0, tension:.2 },
-        { label: mesLabel(foco), data: acum(foco), borderColor:"#121A15",
-          pointRadius:0, borderWidth:2.5, tension:.2 } ] },
+        { label: mesLabel(ant), data: acum(ant), borderColor:"#A9A48E",
+          borderDash:[5,4], pointRadius:0, tension:.2, borderWidth:2 },
+        { label: mesLabel(foco), data: acum(foco), borderColor:INK,
+          pointRadius:0, borderWidth:3, tension:.2 } ] },
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, boxHeight:10 } },
+      plugins:{ legend: legenda(),
         tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
       scales:{ x:{ grid:{display:false}, title:{ display:true, text:"día del mes" } }, y: ejeY() } }
   });
