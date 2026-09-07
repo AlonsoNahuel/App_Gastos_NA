@@ -64,6 +64,7 @@
   <!-- ────── VISTA REGISTRO ────── -->
   <div id="vista-reg">
     <div id="mes-chips" class="chips" style="margin-top:22px;"></div>
+    <div id="pendientes"></div>
 
     <div class="kpis" id="kpis-reg"></div>
 
@@ -151,6 +152,15 @@
       </div>
       <div id="lista-cats"></div>
     </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Comercios reconocidos</div>
+      <div class="nota" style="margin:8px 0 6px;">
+        Este diccionario lo usa el importador de correos para clasificar los gastos automáticamente.
+        Se completa solo cada vez que reclasificás un gasto importado.
+      </div>
+      <div id="lista-comercios"></div>
+    </div>
   </div>
 </div>
 
@@ -171,6 +181,7 @@ const INK = "#1E2A14", LIMA = "#DCF14B", VERDE = "#4C7A2F", ROJO = "#A65A3A", GR
 
 let movimientos = [];
 let categorias = [];         // [{id, nombre, color, activa, orden}]
+let comercios = [];          // [{id, nombre, categoria_id, vistas}]
 let mesSel = null;
 let mesFoco = null;
 const charts = {};
@@ -223,17 +234,20 @@ async function arrancar(){
 
 /* ─────────── Datos ─────────── */
 async function cargar(){
-  const [rc, rm] = await Promise.all([
+  const [rc, rm, rco] = await Promise.all([
     sb.from("categorias").select("*").order("orden").order("nombre"),
-    sb.from("movimientos").select("*").order("fecha",{ascending:true})
+    sb.from("movimientos").select("*").order("fecha",{ascending:true}),
+    sb.from("comercios").select("*").order("vistas",{ascending:false})
   ]);
   if(rc.error){ avisar("Error al cargar categorías: "+rc.error.message); return; }
   if(rm.error){ avisar("Error al cargar movimientos: "+rm.error.message); return; }
-  categorias = rc.data; movimientos = rm.data;
+  if(rco.error){ avisar("Error al cargar comercios: "+rco.error.message); return; }
+  categorias = rc.data; movimientos = rm.data; comercios = rco.data;
   if(!mesSel) mesSel = mesKey(hoyISO());
   llenarSelectCats();
   renderTodo();
   renderCats();
+  renderComercios();
 }
 
 function llenarSelectCats(){
@@ -264,6 +278,33 @@ async function agregar(){
 async function borrar(id){
   const { error } = await sb.from("movimientos").delete().eq("id", id);
   if(error){ avisar("No se pudo borrar: "+error.message); return; }
+  await cargar();
+}
+
+function editarCat(movId){
+  const m = movimientos.find(x=>x.id===movId);
+  if(!m) return;
+  const activas = categorias.filter(c=>c.activa);
+  $("cat-"+movId).innerHTML = `<select id="sel-cat-${movId}"
+      onchange="aplicarCat('${movId}', this.value)" onblur="renderTodo()">
+    ${activas.map(c=>`<option value="${c.id}" ${c.id===m.categoria_id?"selected":""}>${esc(c.nombre)}</option>`).join("")}
+  </select>`;
+  $("sel-cat-"+movId).focus();
+}
+
+async function aplicarCat(movId, catId){
+  const m = movimientos.find(x=>x.id===movId);
+  if(!m || m.categoria_id===catId){ renderTodo(); return; }
+  const { error } = await sb.from("movimientos").update({ categoria_id: catId }).eq("id", movId);
+  if(error){ avisar("No se pudo cambiar la categoría: "+error.message); return; }
+  if(m.comercio){
+    const existente = comercios.find(c=>c.nombre===m.comercio);
+    const { error: eDic } = existente
+      ? await sb.from("comercios").update({ categoria_id: catId }).eq("id", existente.id)
+      : await sb.from("comercios").insert({ nombre: m.comercio, categoria_id: catId });
+    if(eDic){ avisar("No se pudo actualizar el diccionario de comercios: "+eDic.message); }
+    else avisar(`Listo: de ahora en más "${m.comercio}" se carga como ${catNombre(catId)}.`);
+  }
   await cargar();
 }
 
@@ -327,6 +368,35 @@ function renderCats(){
     `<div style="color:var(--gris); font-size:14px;">Todavía no hay categorías. Creá la primera arriba.</div>`;
 }
 
+/* ─────────── Comercios: diccionario del importador ─────────── */
+async function updComercio(id, catId){
+  const { error } = await sb.from("comercios").update({ categoria_id: catId }).eq("id", id);
+  if(error){ avisar("No se pudo actualizar: "+error.message); return; }
+  await cargar();
+}
+
+async function delComercio(id){
+  const { error } = await sb.from("comercios").delete().eq("id", id);
+  if(error){ avisar("No se pudo eliminar: "+error.message); return; }
+  await cargar();
+}
+
+function renderComercios(){
+  const activas = categorias.filter(c=>c.activa);
+  $("lista-comercios").innerHTML = comercios.length ? comercios.map(c=>`
+    <div class="fila" style="padding:12px 2px;">
+      <span class="dot" style="background:${catColor(c.categoria_id)};"></span>
+      <span style="flex:1; min-width:120px;">${esc(c.nombre)}</span>
+      <span class="mono" style="font-size:11.5px; color:var(--gris); flex:none; min-width:40px; text-align:right;">
+        ${c.vistas||0}×</span>
+      <select onchange="updComercio('${c.id}',this.value)">
+        ${activas.map(cat=>`<option value="${cat.id}" ${cat.id===c.categoria_id?"selected":""}>${esc(cat.nombre)}</option>`).join("")}
+      </select>
+      <button class="x" style="flex:none;" title="Eliminar" onclick="delComercio('${c.id}')">×</button>
+    </div>`).join("") :
+    `<div style="color:var(--gris); font-size:14px;">Todavía no hay comercios reconocidos. Se completan solos a medida que reclasificás gastos importados.</div>`;
+}
+
 /* ─────────── Agregaciones ─────────── */
 function mesesDisponibles(){
   const s = new Set(movimientos.map(m=>mesKey(m.fecha))); s.add(mesKey(hoyISO()));
@@ -362,6 +432,11 @@ function renderTodo(){
   $("mes-chips").innerHTML = mesesDisponibles().map(k=>
     `<button class="chip ${k===mesSel?"on":""}" onclick="mesSel='${k}';renderTodo()">${mesLabel(k)}</button>`).join("");
 
+  const catSinClasif = categorias.find(c=>c.nombre==="Sin clasificar");
+  const pendientes = catSinClasif ? movimientos.filter(m=>m.categoria_id===catSinClasif.id).length : 0;
+  $("pendientes").innerHTML = pendientes ?
+    `<div class="aviso-pend">${pendientes} movimiento${pendientes===1?"":"s"} sin clasificar. Tocá el nombre de la categoría en la lista de movimientos para asignarla.</div>` : "";
+
   const r = resumenMes(mesSel);
   const dias = new Set(delMes(mesSel).filter(m=>m.tipo==="Gasto").map(m=>m.fecha)).size || 1;
   $("kpis-reg").innerHTML = kpiHTML([
@@ -392,10 +467,10 @@ function renderTodo(){
       <div class="mono" style="font-size:11.5px; color:var(--gris); min-width:42px;">${m.fecha.slice(8,10)}/${m.fecha.slice(5,7)}</div>
       <span class="dot" style="background:${m.tipo==="Ingreso"?"var(--verde)":catColor(m.categoria_id)};"></span>
       <div style="flex:1; min-width:0;">
-        <div style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          ${m.tipo==="Ingreso"?"Ingreso":esc(catNombre(m.categoria_id))}
+        <div id="cat-${m.id}" style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${m.tipo==="Ingreso"?"Ingreso":`<span class="cat-edit" onclick="editarCat('${m.id}')">${esc(catNombre(m.categoria_id))}</span>`}
         </div>
-        ${m.aclaracion?`<div style="font-size:12px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.aclaracion)}</div>`:""}
+        ${(m.comercio||m.aclaracion)?`<div style="font-size:12px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.comercio||m.aclaracion)}</div>`:""}
       </div>
       <div class="mono" style="font-size:13.5px; font-weight:700; color:${m.tipo==="Ingreso"?"var(--verde)":"var(--tinta)"};">
         ${m.tipo==="Ingreso"?"+":""}${fmt(m.monto, m.divisa)}</div>
