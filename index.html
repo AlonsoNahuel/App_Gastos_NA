@@ -184,6 +184,8 @@ let categorias = [];         // [{id, nombre, color, activa, orden}]
 let comercios = [];          // [{id, nombre, categoria_id, vistas}]
 let mesSel = null;
 let mesFoco = null;
+let mesesCargados = 13;      // ventana de historial: mes actual + 12 anteriores
+let movsAnteriores = 0;      // cuántos movimientos quedan fuera de la ventana
 const charts = {};
 
 const $ = id => document.getElementById(id);
@@ -233,16 +235,41 @@ async function arrancar(){
 }
 
 /* ─────────── Datos ─────────── */
+/* Primer día del mes que abre la ventana de historial (ej. "2025-12-01"). */
+function inicioVentana(){
+  let k = mesKey(hoyISO());
+  for(let i=1; i<mesesCargados; i++) k = mesAnterior(k);
+  return k+"-01";
+}
+
+/* Supabase devuelve como máximo 1000 filas por consulta ("Max rows" en API settings).
+   Pedimos de a páginas hasta que una venga incompleta, así nunca se pierden filas.
+   El orden por id desempata movimientos del mismo día para que las páginas no se pisen. */
+const PAGINA = 1000;
+async function traerMovimientos(desde){
+  const filas = [];
+  for(let i=0; ; i+=PAGINA){
+    const { data, error } = await sb.from("movimientos").select("*")
+      .gte("fecha", desde).order("fecha").order("id").range(i, i+PAGINA-1);
+    if(error) return { error };
+    filas.push(...data);
+    if(data.length < PAGINA) return { data: filas };
+  }
+}
+
 async function cargar(){
-  const [rc, rm, rco] = await Promise.all([
+  const desde = inicioVentana();
+  const [rc, rm, rco, rant] = await Promise.all([
     sb.from("categorias").select("*").order("orden").order("nombre"),
-    sb.from("movimientos").select("*").order("fecha",{ascending:true}),
-    sb.from("comercios").select("*").order("vistas",{ascending:false})
+    traerMovimientos(desde),
+    sb.from("comercios").select("*").order("vistas",{ascending:false}),
+    sb.from("movimientos").select("id",{count:"exact", head:true}).lt("fecha", desde)
   ]);
   if(rc.error){ avisar("Error al cargar categorías: "+rc.error.message); return; }
   if(rm.error){ avisar("Error al cargar movimientos: "+rm.error.message); return; }
   if(rco.error){ avisar("Error al cargar comercios: "+rco.error.message); return; }
   categorias = rc.data; movimientos = rm.data; comercios = rco.data;
+  movsAnteriores = rant.error ? 0 : (rant.count || 0);
   if(!mesSel) mesSel = mesKey(hoyISO());
   llenarSelectCats();
   renderTodo();
@@ -423,6 +450,11 @@ function verTab(t){
   });
   if(t==="dash") renderDash();
 }
+async function cargarMasMeses(){
+  mesesCargados += 12;
+  await cargar();
+  if(!$("vista-dash").classList.contains("oculto")) renderDash();
+}
 function toggleForm(){ $("form-card").classList.toggle("oculto"); }
 function tipoCambio(){ $("f-crit-box").style.visibility =
   $("f-tipo").value==="Ingreso" ? "hidden" : "visible"; }
@@ -430,7 +462,8 @@ function tipoCambio(){ $("f-crit-box").style.visibility =
 /* ─────────── Vista Registro ─────────── */
 function renderTodo(){
   $("mes-chips").innerHTML = mesesDisponibles().map(k=>
-    `<button class="chip ${k===mesSel?"on":""}" onclick="mesSel='${k}';renderTodo()">${mesLabel(k)}</button>`).join("");
+    `<button class="chip ${k===mesSel?"on":""}" onclick="mesSel='${k}';renderTodo()">${mesLabel(k)}</button>`).join("") +
+    (movsAnteriores ? `<button class="chip mini" onclick="cargarMasMeses()">+ 12 meses anteriores (${movsAnteriores} mov.)</button>` : "");
 
   const catSinClasif = categorias.find(c=>c.nombre==="Sin clasificar");
   const pendientes = catSinClasif ? movimientos.filter(m=>m.categoria_id===catSinClasif.id).length : 0;
