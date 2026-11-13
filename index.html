@@ -21,11 +21,11 @@
   </div>
   <div class="card login-card">
     <div>
-      <div class="label" style="margin-bottom:6px;">Email</div>
+      <label class="label" for="li-email" style="margin-bottom:6px;">Email</label>
       <input id="li-email" type="email" autocomplete="username" />
     </div>
     <div>
-      <div class="label" style="margin-bottom:6px;">Contraseña</div>
+      <label class="label" for="li-pass" style="margin-bottom:6px;">Contraseña</label>
       <input id="li-pass" type="password" autocomplete="current-password" />
     </div>
     <button class="btn-lima" onclick="ingresar()">Ingresar →</button>
@@ -59,7 +59,7 @@
     <button class="tab" id="tab-cats" onclick="verTab('cats')">Categorías</button>
   </div>
 
-  <div class="aviso" id="aviso"></div>
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
   <!-- ────── VISTA REGISTRO ────── -->
   <div id="vista-reg">
@@ -71,19 +71,24 @@
     <button class="btn-lima" style="margin-top:18px;" onclick="toggleForm()">+ Registrar movimiento</button>
 
     <div class="card oculto" id="form-card" style="margin-top:12px;">
+      <div class="card-title" id="form-titulo" style="margin-bottom:14px;">Nuevo movimiento</div>
       <div class="formgrid">
-        <div><div class="label" style="margin-bottom:6px;">Fecha</div><input type="date" id="f-fecha" /></div>
-        <div><div class="label" style="margin-bottom:6px;">Tipo</div>
+        <div><label class="label" for="f-fecha" style="margin-bottom:6px;">Fecha</label><input type="date" id="f-fecha" /></div>
+        <div><label class="label" for="f-tipo" style="margin-bottom:6px;">Tipo</label>
           <select id="f-tipo" onchange="tipoCambio()"><option>Gasto</option><option>Ingreso</option></select></div>
-        <div id="f-crit-box"><div class="label" style="margin-bottom:6px;">Categoría</div><select id="f-criterio"></select></div>
-        <div><div class="label" style="margin-bottom:6px;">Monto</div>
+        <div id="f-crit-box"><label class="label" for="f-criterio" style="margin-bottom:6px;">Categoría</label><select id="f-criterio"></select></div>
+        <div><label class="label" for="f-monto" style="margin-bottom:6px;">Monto</label>
           <div style="display:flex; gap:6px;">
-            <select id="f-divisa" style="width:80px;"><option>$U</option><option>USD</option></select>
+            <select id="f-divisa" style="width:80px;" aria-label="Divisa"><option>$U</option><option>USD</option></select>
             <input type="number" inputmode="decimal" id="f-monto" placeholder="0" class="mono" />
           </div></div>
-        <div style="grid-column:1/-1;"><div class="label" style="margin-bottom:6px;">Aclaración (opcional)</div>
+        <div style="grid-column:1/-1;"><label class="label" for="f-acl" style="margin-bottom:6px;">Aclaración (opcional)</label>
           <input type="text" id="f-acl" placeholder="Ej: interno, alfajores, regalo…" /></div>
-        <button class="btn-tinta" style="grid-column:1/-1;" onclick="agregar()">Guardar movimiento</button>
+        <div class="form-acciones">
+          <button class="btn-tinta" id="f-guardar" onclick="guardar()">Guardar movimiento</button>
+          <button class="btn-borde oculto" id="f-cancelar" onclick="cerrarForm()">Cancelar</button>
+          <button class="btn-borrar oculto" id="f-borrar" onclick="borrarEnEdicion()">Borrar</button>
+        </div>
       </div>
     </div>
 
@@ -92,8 +97,17 @@
         <div class="card-title" id="titulo-cat">Gastos por categoría</div>
         <div id="barras-cat" style="margin-top:16px;"></div>
       </div>
-      <div class="card">
+      <div class="card" id="card-movs">
         <div class="card-title" id="titulo-movs">Movimientos</div>
+        <div class="filtros">
+          <input type="search" id="fl-texto" placeholder="Buscar comercio o aclaración…" aria-label="Buscar movimientos"
+            oninput="filtroTexto=this.value; renderLista()" />
+          <select id="fl-cat" aria-label="Filtrar por categoría" onchange="filtroCat=this.value; renderLista()"></select>
+          <div class="chips">
+            <button class="chip mini" id="fl-todos" onclick="filtroTodos=!filtroTodos; renderLista()">Todos los meses</button>
+            <button class="chip mini" onclick="exportarCSV()">Exportar CSV</button>
+          </div>
+        </div>
         <div id="lista-movs" style="max-height:480px; overflow-y:auto; margin-top:10px;"></div>
       </div>
     </div>
@@ -110,24 +124,23 @@
 
     <div class="grid2">
       <div class="card" style="grid-column:1/-1;">
-        <div class="card-title">Gasto mensual por categoría</div>
-        <div class="chartbox" style="height:320px;"><canvas id="ch-apilado"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Ingresos vs gastos</div>
-        <div class="chartbox"><canvas id="ch-flujo"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-title" id="lbl-dona">Distribución del mes</div>
-        <div class="chartbox"><canvas id="ch-dona"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-title" id="lbl-comp">Categorías: mes en foco vs anterior</div>
-        <div class="chartbox" style="height:320px;"><canvas id="ch-comp"></canvas></div>
-      </div>
-      <div class="card">
         <div class="card-title" id="lbl-acum">Gasto acumulado día a día</div>
-        <div class="chartbox" style="height:320px;"><canvas id="ch-acum"></canvas></div>
+        <div class="chartbox" style="height:300px;"><canvas id="ch-acum"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">¿Dónde cambió?</div>
+        <div class="nota" id="sub-cambio" style="margin-top:4px;"></div>
+        <div class="chartbox" id="box-cambio"><canvas id="ch-cambio"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ahorro mensual</div>
+        <div class="nota" style="margin-top:4px;">Ingresos menos gastos. Tocá un mes para ponerlo en foco.</div>
+        <div class="chartbox"><canvas id="ch-ahorro"></canvas></div>
+      </div>
+      <div class="card" style="grid-column:1/-1;">
+        <div class="card-title">Evolución mensual por categoría</div>
+        <div class="nota" style="margin-top:4px;">Las 5 categorías con más gasto; el resto va en "Otras". Tocá una barra para ver esos movimientos.</div>
+        <div class="chartbox" style="height:320px;"><canvas id="ch-apilado"></canvas></div>
       </div>
     </div>
   </div>
@@ -137,8 +150,8 @@
     <div class="card" style="margin-top:22px;">
       <div class="card-title">Nueva categoría</div>
       <div style="display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center;">
-        <input type="color" id="nc-color" value="#7FA03F" style="width:50px; flex:none;" />
-        <input type="text" id="nc-nombre" placeholder="Nombre de la categoría" style="flex:1; min-width:180px;" />
+        <input type="color" id="nc-color" value="#7FA03F" style="width:50px; flex:none;" aria-label="Color" />
+        <input type="text" id="nc-nombre" placeholder="Nombre de la categoría" style="flex:1; min-width:180px;" aria-label="Nombre de la categoría" />
         <button class="btn-tinta" style="width:auto; padding:11px 26px; flex:none;" onclick="crearCat()">Crear</button>
       </div>
     </div>
@@ -146,10 +159,12 @@
     <div class="card" style="margin-top:16px;">
       <div class="card-title">Tus categorías</div>
       <div class="nota" style="margin:8px 0 6px;">
-        Los cambios de nombre y color se guardan solos al salir del campo y se aplican a todo el historial.
+        Los cambios de nombre, color y tope se guardan solos al salir del campo y se aplican a todo el historial.
+        El <b>tope</b> es un presupuesto mensual opcional en $U: dejalo vacío si no querés límite.
         Una categoría oculta desaparece del formulario pero conserva sus movimientos.
         Solo se puede eliminar una categoría que nunca se usó.
       </div>
+      <div id="aviso-migracion"></div>
       <div id="lista-cats"></div>
     </div>
 
@@ -180,33 +195,50 @@ const MESES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","N
 const INK = "#1E2A14", LIMA = "#DCF14B", VERDE = "#4C7A2F", ROJO = "#A65A3A", GRIS = "#807D6C";
 
 let movimientos = [];
-let categorias = [];         // [{id, nombre, color, activa, orden}]
+let categorias = [];         // [{id, nombre, color, activa, orden, presupuesto}]
 let comercios = [];          // [{id, nombre, categoria_id, vistas}]
 let mesSel = null;
 let mesFoco = null;
 let mesesCargados = 13;      // ventana de historial: mes actual + 12 anteriores
 let movsAnteriores = 0;      // cuántos movimientos quedan fuera de la ventana
+let filtroTexto = "";        // búsqueda en la lista de movimientos
+let filtroCat = "";          // "" = todas · "__ing" = ingresos · id de categoría
+let filtroTodos = false;     // true = buscar en todos los meses cargados
+let editandoId = null;       // movimiento abierto en el formulario
+let guardando = false;       // evita el doble toque en "Guardar"
 const charts = {};
 
 const $ = id => document.getElementById(id);
 const fmt = (n, div="$U") => (div==="USD"?"US$ ":"$ ") +
   new Intl.NumberFormat("es-UY",{maximumFractionDigits:0}).format(Math.round(n));
+const fmtSigno = n => (n>=0?"+":"−")+fmt(Math.abs(n));
 const mesKey = f => f.slice(0,7);
 const mesLabel = k => { const [y,m]=k.split("-"); return MESES_ES[+m-1]+" "+y; };
 const hoyISO = () => { const d=new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const mesAnterior = k => { let [y,m]=k.split("-").map(Number); m--; if(m===0){m=12;y--;}
   return `${y}-${String(m).padStart(2,"0")}`; };
+const diasDelMes = k => { const [y,m]=k.split("-").map(Number); return new Date(y,m,0).getDate(); };
+/* Día de corte para comparar meses de forma justa: en el mes actual es hoy,
+   en un mes ya cerrado es el mes completo. */
+const diaCorte = k => k===mesKey(hoyISO()) ? +hoyISO().slice(8,10) : 31;
+const mesesPrevios = (k, n) => { const r=[]; for(let i=0;i<n;i++){ k=mesAnterior(k); r.push(k); } return r; };
 
 const catDe = id => categorias.find(c=>c.id===id);
 const catNombre = id => (catDe(id)||{}).nombre || "Sin categoría";
 const catColor = id => (catDe(id)||{}).color || "#8A8471";
+const catTope = id => Number((catDe(id)||{}).presupuesto) || 0;
+const sinClasif = () => categorias.find(c=>c.nombre==="Sin clasificar");
+const topeTotal = () => categorias.filter(c=>c.activa).reduce((s,c)=>s+catTope(c.id),0);
 
-function avisar(msg){ const a=$("aviso"); a.textContent=msg; a.style.display="block";
-  setTimeout(()=>a.style.display="none",4500); }
+function avisar(msg, tipo="error"){
+  const a=$("aviso"); a.textContent=msg; a.classList.toggle("ok", tipo==="ok"); a.style.display="block";
+  clearTimeout(avisar.t); avisar.t = setTimeout(()=>a.style.display="none", 4500);
+}
 
 const esc = t => t==null ? "" : String(t)
-  .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+  .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;").replaceAll("'","&#39;");
 
 const configLista = !SUPABASE_URL.includes("TU-PROYECTO") && !SUPABASE_ANON_KEY.includes("TU_ANON");
 
@@ -271,20 +303,63 @@ async function cargar(){
   categorias = rc.data; movimientos = rm.data; comercios = rco.data;
   movsAnteriores = rant.error ? 0 : (rant.count || 0);
   if(!mesSel) mesSel = mesKey(hoyISO());
-  llenarSelectCats();
+  if(!editandoId) llenarSelectCats();
   renderTodo();
   renderCats();
   renderComercios();
+  if(!$("vista-dash").classList.contains("oculto")) renderDash();
 }
 
-function llenarSelectCats(){
-  const activas = categorias.filter(c=>c.activa);
-  const prev = $("f-criterio").value;
-  $("f-criterio").innerHTML = activas.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join("");
-  if(prev && activas.some(c=>c.id===prev)) $("f-criterio").value = prev;
+/* Opciones del formulario: categorías visibles + la del movimiento en edición aunque esté oculta. */
+function llenarSelectCats(incluir){
+  const opciones = categorias.filter(c=>c.activa || c.id===incluir);
+  const prev = incluir || $("f-criterio").value;
+  $("f-criterio").innerHTML = opciones.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join("");
+  if(prev && opciones.some(c=>c.id===prev)) $("f-criterio").value = prev;
 }
 
-async function agregar(){
+/* ─────────── Formulario: alta y edición ─────────── */
+function abrirFormNuevo(){
+  cerrarForm();
+  $("form-card").classList.remove("oculto");
+  $("f-monto").focus();
+}
+function toggleForm(){
+  if($("form-card").classList.contains("oculto") || editandoId) abrirFormNuevo();
+  else cerrarForm();
+}
+function cerrarForm(){
+  editandoId = null;
+  $("form-titulo").textContent = "Nuevo movimiento";
+  $("f-guardar").textContent = "Guardar movimiento";
+  $("f-cancelar").classList.add("oculto");
+  $("f-borrar").classList.add("oculto");
+  $("f-monto").value = ""; $("f-acl").value = "";
+  $("f-fecha").value = hoyISO();
+  llenarSelectCats();
+  $("form-card").classList.add("oculto");
+}
+
+function editarMov(id){
+  const m = movimientos.find(x=>x.id===id);
+  if(!m) return;
+  editandoId = id;
+  $("f-fecha").value = m.fecha;
+  $("f-tipo").value = m.tipo; tipoCambio();
+  llenarSelectCats(m.categoria_id);
+  $("f-divisa").value = m.divisa;
+  $("f-monto").value = Number(m.monto);
+  $("f-acl").value = m.aclaracion || "";
+  $("form-titulo").textContent = "Editar movimiento" + (m.comercio ? " · "+m.comercio : "");
+  $("f-guardar").textContent = "Guardar cambios";
+  $("f-cancelar").classList.remove("oculto");
+  $("f-borrar").classList.remove("oculto");
+  $("form-card").classList.remove("oculto");
+  $("form-card").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+async function guardar(){
+  if(guardando) return;
   const monto = parseFloat(String($("f-monto").value).replace(",","."));
   if(!$("f-fecha").value || !monto || monto<=0){ avisar("Ingresá una fecha y un monto mayor a cero."); return; }
   const tipo = $("f-tipo").value;
@@ -295,25 +370,48 @@ async function agregar(){
     divisa: $("f-divisa").value, monto,
     aclaracion: $("f-acl").value.trim() || null
   };
-  const { error } = await sb.from("movimientos").insert(fila);
+  const previo = editandoId ? movimientos.find(x=>x.id===editandoId) : null;
+
+  guardando = true; $("f-guardar").disabled = true;
+  const { error } = previo
+    ? await sb.from("movimientos").update(fila).eq("id", previo.id)
+    : await sb.from("movimientos").insert(fila);
+  guardando = false; $("f-guardar").disabled = false;
   if(error){ avisar("No se pudo guardar: "+error.message); return; }
-  $("f-monto").value=""; $("f-acl").value="";
+
   mesSel = mesKey(fila.fecha);
+  if(previo){
+    if(previo.comercio && fila.categoria_id && fila.categoria_id!==previo.categoria_id)
+      await aprenderComercio(previo, fila.categoria_id);
+    else avisar("Cambios guardados.", "ok");
+    cerrarForm();
+  } else {
+    // Alta: el formulario queda abierto para cargar varios seguidos
+    $("f-monto").value=""; $("f-acl").value="";
+    avisar("Movimiento guardado.", "ok");
+  }
   await cargar();
 }
 
-async function borrar(id){
-  const { error } = await sb.from("movimientos").delete().eq("id", id);
+async function borrarEnEdicion(){
+  const m = movimientos.find(x=>x.id===editandoId);
+  if(!m) return;
+  const quien = m.tipo==="Ingreso" ? "el ingreso" : "el gasto";
+  if(!confirm(`¿Borrar ${quien} de ${fmt(m.monto, m.divisa)} del ${m.fecha.slice(8,10)}/${m.fecha.slice(5,7)}? No se puede deshacer.`)) return;
+  const { error } = await sb.from("movimientos").delete().eq("id", m.id);
   if(error){ avisar("No se pudo borrar: "+error.message); return; }
+  cerrarForm();
+  avisar("Movimiento borrado.", "ok");
   await cargar();
 }
 
+/* ─────────── Reclasificación rápida desde la lista ─────────── */
 function editarCat(movId){
   const m = movimientos.find(x=>x.id===movId);
   if(!m) return;
   const activas = categorias.filter(c=>c.activa);
-  $("cat-"+movId).innerHTML = `<select id="sel-cat-${movId}"
-      onchange="aplicarCat('${movId}', this.value)" onblur="renderTodo()">
+  $("cat-"+movId).innerHTML = `<select id="sel-cat-${movId}" aria-label="Categoría"
+      onchange="aplicarCat('${movId}', this.value)" onblur="renderLista()">
     ${activas.map(c=>`<option value="${c.id}" ${c.id===m.categoria_id?"selected":""}>${esc(c.nombre)}</option>`).join("")}
   </select>`;
   $("sel-cat-"+movId).focus();
@@ -321,18 +419,34 @@ function editarCat(movId){
 
 async function aplicarCat(movId, catId){
   const m = movimientos.find(x=>x.id===movId);
-  if(!m || m.categoria_id===catId){ renderTodo(); return; }
+  if(!m || m.categoria_id===catId){ renderLista(); return; }
   const { error } = await sb.from("movimientos").update({ categoria_id: catId }).eq("id", movId);
   if(error){ avisar("No se pudo cambiar la categoría: "+error.message); return; }
-  if(m.comercio){
-    const existente = comercios.find(c=>c.nombre===m.comercio);
-    const { error: eDic } = existente
-      ? await sb.from("comercios").update({ categoria_id: catId }).eq("id", existente.id)
-      : await sb.from("comercios").insert({ nombre: m.comercio, categoria_id: catId });
-    if(eDic){ avisar("No se pudo actualizar el diccionario de comercios: "+eDic.message); }
-    else avisar(`Listo: de ahora en más "${m.comercio}" se carga como ${catNombre(catId)}.`);
-  }
+  if(m.comercio) await aprenderComercio(m, catId);
   await cargar();
+}
+
+/* Guarda comercio → categoría en el diccionario y ofrece pasar los otros
+   pendientes ("Sin clasificar") del mismo comercio a la categoría nueva. */
+async function aprenderComercio(m, catId){
+  const existente = comercios.find(c=>c.nombre===m.comercio);
+  const { error } = existente
+    ? await sb.from("comercios").update({ categoria_id: catId }).eq("id", existente.id)
+    : await sb.from("comercios").insert({ nombre: m.comercio, categoria_id: catId });
+  if(error){ avisar("No se pudo actualizar el diccionario de comercios: "+error.message); return; }
+
+  let extra = "";
+  const sc = sinClasif();
+  const otros = sc && sc.id!==catId
+    ? movimientos.filter(x=>x.id!==m.id && x.comercio===m.comercio && x.categoria_id===sc.id) : [];
+  if(otros.length && confirm(`Hay ${otros.length} movimiento${otros.length===1?"":"s"} más de "${m.comercio}" sin clasificar. ¿Pasarlos también a ${catNombre(catId)}?`)){
+    // El filtro va en la base: también alcanza a pendientes fuera de los meses cargados
+    const { error: eLote } = await sb.from("movimientos").update({ categoria_id: catId })
+      .eq("comercio", m.comercio).eq("categoria_id", sc.id);
+    if(eLote){ avisar("Se aprendió el comercio, pero no se pudieron reclasificar los pendientes: "+eLote.message); return; }
+    extra = " También se reclasificaron los pendientes.";
+  }
+  avisar(`Listo: de ahora en más "${m.comercio}" se carga como ${catNombre(catId)}.`+extra, "ok");
 }
 
 /* ─────────── Categorías: CRUD ─────────── */
@@ -350,10 +464,19 @@ async function crearCat(){
   await cargar();
 }
 
+const hayColumnaPresupuesto = () => !categorias.length || "presupuesto" in categorias[0];
+const MSG_MIGRACION = "Para usar topes, corré una vez migrations/2026-11-13_presupuestos.sql en el SQL Editor de Supabase.";
+
 async function updCat(id, campo, valor){
   if(campo==="nombre"){
     valor = valor.trim();
     if(!valor){ avisar("El nombre no puede quedar vacío."); renderCats(); return; }
+  }
+  if(campo==="presupuesto"){
+    if(!hayColumnaPresupuesto()){ avisar(MSG_MIGRACION); renderCats(); return; }
+    const txt = String(valor).trim().replace(",",".");
+    valor = txt==="" ? null : parseFloat(txt);
+    if(valor!==null && !(valor>0)){ avisar("El tope tiene que ser un número mayor a cero, o quedar vacío."); renderCats(); return; }
   }
   const { error } = await sb.from("categorias").update({ [campo]: valor }).eq("id", id);
   if(error){
@@ -379,18 +502,25 @@ function renderCats(){
   for(const m of movimientos) if(m.categoria_id)
     usoPorCat[m.categoria_id] = (usoPorCat[m.categoria_id]||0)+1;
 
+  $("aviso-migracion").innerHTML = hayColumnaPresupuesto() ? "" :
+    `<div class="aviso-pend" style="margin-bottom:8px;">${esc(MSG_MIGRACION)}</div>`;
+
   $("lista-cats").innerHTML = categorias.map(c=>`
-    <div class="fila" style="padding:12px 2px;">
-      <input type="color" value="${c.color}" class="cat-color"
+    <div class="fila fila-cat">
+      <input type="color" value="${esc(c.color)}" class="cat-color" aria-label="Color de ${esc(c.nombre)}"
         onchange="updCat('${c.id}','color',this.value)" title="Color" />
-      <input type="text" value="${esc(c.nombre)}" style="flex:1; min-width:120px; ${c.activa?"":"opacity:.45; text-decoration:line-through;"}"
+      <input type="text" value="${esc(c.nombre)}" class="cat-nombre" aria-label="Nombre"
+        style="${c.activa?"":"opacity:.45; text-decoration:line-through;"}"
         onchange="updCat('${c.id}','nombre',this.value)" />
-      <span class="mono" style="font-size:11.5px; color:var(--gris); flex:none; min-width:70px; text-align:right;">
+      <input type="number" inputmode="decimal" class="mono cat-tope" placeholder="Sin tope"
+        value="${c.presupuesto ?? ""}" aria-label="Tope mensual de ${esc(c.nombre)} en pesos" title="Tope mensual ($U)"
+        onchange="updCat('${c.id}','presupuesto',this.value)" />
+      <span class="mono" style="font-size:11.5px; color:var(--gris); flex:none; min-width:60px; text-align:right;">
         ${usoPorCat[c.id]||0} mov.</span>
       <button class="chip mini ${c.activa?"on":""}" style="flex:none;"
         onclick="updCat('${c.id}','activa',${!c.activa})">${c.activa?"Visible":"Oculta"}</button>
       <button class="x" style="flex:none; ${usoPorCat[c.id]?"visibility:hidden;":""}" title="Eliminar (solo si nunca se usó)"
-        onclick="delCat('${c.id}')">×</button>
+        aria-label="Eliminar ${esc(c.nombre)}" onclick="delCat('${c.id}')">×</button>
     </div>`).join("") ||
     `<div style="color:var(--gris); font-size:14px;">Todavía no hay categorías. Creá la primera arriba.</div>`;
 }
@@ -411,17 +541,43 @@ async function delComercio(id){
 function renderComercios(){
   const activas = categorias.filter(c=>c.activa);
   $("lista-comercios").innerHTML = comercios.length ? comercios.map(c=>`
-    <div class="fila" style="padding:12px 2px;">
-      <span class="dot" style="background:${catColor(c.categoria_id)};"></span>
+    <div class="fila fila-cat">
+      <span class="dot" style="background:${esc(catColor(c.categoria_id))};"></span>
       <span style="flex:1; min-width:120px;">${esc(c.nombre)}</span>
       <span class="mono" style="font-size:11.5px; color:var(--gris); flex:none; min-width:40px; text-align:right;">
         ${c.vistas||0}×</span>
-      <select onchange="updComercio('${c.id}',this.value)">
+      <select onchange="updComercio('${c.id}',this.value)" aria-label="Categoría de ${esc(c.nombre)}">
         ${activas.map(cat=>`<option value="${cat.id}" ${cat.id===c.categoria_id?"selected":""}>${esc(cat.nombre)}</option>`).join("")}
       </select>
-      <button class="x" style="flex:none;" title="Eliminar" onclick="delComercio('${c.id}')">×</button>
+      <button class="x" style="flex:none;" title="Eliminar" aria-label="Eliminar ${esc(c.nombre)}" onclick="delComercio('${c.id}')">×</button>
     </div>`).join("") :
     `<div style="color:var(--gris); font-size:14px;">Todavía no hay comercios reconocidos. Se completan solos a medida que reclasificás gastos importados.</div>`;
+}
+
+/* ─────────── Exportar CSV ─────────── */
+/* Armamos el CSV acá en vez de usar .csv() de supabase-js por dos motivos:
+   .csv() también corta en 1000 filas y devuelve el id de la categoría en vez del nombre.
+   Separador ";" y coma decimal para que Excel en español lo abra bien.
+   En pandas: pd.read_csv("gastos.csv", sep=";", decimal=",") */
+const csvCampo = v => {
+  let s = v==null ? "" : String(v);
+  if(/^[=+\-@\t]/.test(s)) s = "'"+s;               // evita que Excel lo tome como fórmula
+  return /[";\r\n]/.test(s) ? `"${s.replaceAll('"','""')}"` : s;
+};
+async function exportarCSV(){
+  avisar("Preparando el CSV…", "ok");
+  const { data, error } = await traerMovimientos("1900-01-01");   // todo el historial
+  if(error){ avisar("No se pudo exportar: "+error.message); return; }
+  const encabezado = ["fecha","tipo","categoria","divisa","monto","comercio","aclaracion","forma_pago"];
+  const filas = data.map(m=>[
+    m.fecha, m.tipo, m.tipo==="Ingreso" ? "" : catNombre(m.categoria_id), m.divisa,
+    String(m.monto).replace(".",","), m.comercio, m.aclaracion, m.forma_pago ]);
+  const csv = "﻿" + [encabezado, ...filas].map(f=>f.map(csvCampo).join(";")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+  const a = Object.assign(document.createElement("a"), { href:url, download:`gastos-${hoyISO()}.csv` });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  avisar(`CSV listo: ${data.length} movimientos.`, "ok");
 }
 
 /* ─────────── Agregaciones ─────────── */
@@ -432,9 +588,11 @@ function mesesDisponibles(){
 function delMes(k){ return movimientos.filter(m=>mesKey(m.fecha)===k && m.divisa==="$U"); }
 function delMesTodasDivisas(k){ return movimientos.filter(m=>mesKey(m.fecha)===k); }
 
-function resumenMes(k){
+/* Totales en $U del mes k, contando solo hasta el día `hastaDia` (para comparar al mismo día). */
+function resumenMes(k, hastaDia=31){
   let ing=0, gas=0; const porCat={};   // porCat: categoria_id → monto
   for(const m of delMes(k)){
+    if(+m.fecha.slice(8,10) > hastaDia) continue;
     const v = Number(m.monto);
     if(m.tipo==="Ingreso") ing+=v;
     else { gas+=v; porCat[m.categoria_id]=(porCat[m.categoria_id]||0)+v; }
@@ -453,11 +611,26 @@ function verTab(t){
 async function cargarMasMeses(){
   mesesCargados += 12;
   await cargar();
-  if(!$("vista-dash").classList.contains("oculto")) renderDash();
 }
-function toggleForm(){ $("form-card").classList.toggle("oculto"); }
 function tipoCambio(){ $("f-crit-box").style.visibility =
   $("f-tipo").value==="Ingreso" ? "hidden" : "visible"; }
+
+/* Lleva a Registro mostrando solo una categoría (desde barras o gráficos). */
+function filtrarCat(catId, mes){
+  if(mes) mesSel = mes;
+  filtroCat = catId || ""; filtroTodos = false;
+  filtroTexto = ""; $("fl-texto").value = "";
+  verTab("reg");
+  renderTodo();
+  $("card-movs").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+function verPendientes(){
+  const sc = sinClasif(); if(!sc) return;
+  filtroCat = sc.id; filtroTodos = true;
+  filtroTexto = ""; $("fl-texto").value = "";
+  renderLista();
+  $("card-movs").scrollIntoView({ behavior:"smooth", block:"start" });
+}
 
 /* ─────────── Vista Registro ─────────── */
 function renderTodo(){
@@ -465,10 +638,11 @@ function renderTodo(){
     `<button class="chip ${k===mesSel?"on":""}" onclick="mesSel='${k}';renderTodo()">${mesLabel(k)}</button>`).join("") +
     (movsAnteriores ? `<button class="chip mini" onclick="cargarMasMeses()">+ 12 meses anteriores (${movsAnteriores} mov.)</button>` : "");
 
-  const catSinClasif = categorias.find(c=>c.nombre==="Sin clasificar");
-  const pendientes = catSinClasif ? movimientos.filter(m=>m.categoria_id===catSinClasif.id).length : 0;
+  const sc = sinClasif();
+  const pendientes = sc ? movimientos.filter(m=>m.categoria_id===sc.id).length : 0;
   $("pendientes").innerHTML = pendientes ?
-    `<div class="aviso-pend">${pendientes} movimiento${pendientes===1?"":"s"} sin clasificar. Tocá el nombre de la categoría en la lista de movimientos para asignarla.</div>` : "";
+    `<button class="aviso-pend" onclick="verPendientes()">${pendientes} movimiento${pendientes===1?"":"s"} sin clasificar.
+      <u>Ver pendientes</u> y tocá el nombre de la categoría para asignarla.</button>` : "";
 
   const r = resumenMes(mesSel);
   const dias = new Set(delMes(mesSel).filter(m=>m.tipo==="Gasto").map(m=>m.fecha)).size || 1;
@@ -479,37 +653,83 @@ function renderTodo(){
     {l:"Promedio por día con gasto", v:fmt(r.gas/dias), col:"var(--tinta)"},
   ]);
 
+  renderBarras(r);
+  renderLista();
+}
+
+/* Barras por categoría. Si la categoría tiene tope, la barra muestra el avance contra el tope;
+   si no, se compara contra la categoría con más gasto. */
+function renderBarras(r){
   $("titulo-cat").textContent = "Gastos por categoría · "+mesLabel(mesSel);
-  const cats = Object.entries(r.porCat).sort((a,b)=>b[1]-a[1]);
-  const max = cats.length ? cats[0][1] : 1;
-  $("barras-cat").innerHTML = cats.length ? cats.map(([cid,v])=>`
-    <div style="margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px;">
-        <span style="font-weight:500;">${esc(catNombre(cid))}</span><span class="mono" style="font-weight:700; font-size:13px;">${fmt(v)}</span>
+  const conTopeSinGasto = categorias.filter(c=>c.activa && catTope(c.id) && !(c.id in r.porCat)).map(c=>[c.id,0]);
+  const cats = Object.entries(r.porCat).concat(conTopeSinGasto).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(1, ...cats.map(x=>x[1]));
+  $("barras-cat").innerHTML = cats.length ? cats.map(([cid,v])=>{
+    const tope = catTope(cid);
+    const pct = tope ? v/tope*100 : null;
+    const ancho = tope ? Math.min(pct,100) : v/max*100;
+    const fill = pct!==null && pct>100 ? ROJO : catColor(cid);
+    const detalle = pct===null ? "" : `<div class="bar-nota" style="color:${pct>=100?"var(--rojo)":pct>=80?"#9A6B12":"var(--gris)"};">
+        ${pct>100 ? "Te pasaste por "+fmt(v-tope) : "Quedan "+fmt(tope-v)} · ${pct.toFixed(0)}% del tope</div>`;
+    return `
+    <div class="barra-cat" role="button" tabindex="0" onclick="filtrarCat('${cid}')"
+      onkeydown="if(event.key==='Enter')filtrarCat('${cid}')" aria-label="Ver movimientos de ${esc(catNombre(cid))}">
+      <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px; gap:8px;">
+        <span style="font-weight:500;">${esc(catNombre(cid))}</span>
+        <span class="mono" style="font-weight:700; font-size:13px; white-space:nowrap;">${fmt(v)}${tope?`<span style="color:var(--gris); font-weight:400;"> / ${fmt(tope)}</span>`:""}</span>
       </div>
       <div class="bar-track">
-        <div class="bar-fill" style="width:${v/max*100}%; background:${catColor(cid)};"></div>
+        <div class="bar-fill" style="width:${ancho}%; background:${esc(fill)};"></div>
       </div>
-    </div>`).join("") :
+      ${detalle}
+    </div>`; }).join("") :
     `<div style="color:var(--gris); font-size:14px;">Todavía no hay gastos este mes.</div>`;
+}
 
-  const lista = delMesTodasDivisas(mesSel).sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  $("titulo-movs").textContent = "Movimientos · "+lista.length;
+function movsFiltrados(){
+  const base = filtroTodos ? movimientos : delMesTodasDivisas(mesSel);
+  const t = filtroTexto.trim().toLowerCase();
+  return base.filter(m=>{
+    if(filtroCat==="__ing"){ if(m.tipo!=="Ingreso") return false; }
+    else if(filtroCat && m.categoria_id!==filtroCat) return false;
+    if(t && !`${m.comercio||""} ${m.aclaracion||""}`.toLowerCase().includes(t)) return false;
+    return true;
+  }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+}
+
+function renderLista(){
+  // Selector de categoría (incluye ocultas: sirven para buscar en el historial)
+  if(filtroCat && filtroCat!=="__ing" && !catDe(filtroCat)) filtroCat = "";
+  $("fl-cat").innerHTML = `<option value="">Todas las categorías</option><option value="__ing">Solo ingresos</option>` +
+    categorias.map(c=>`<option value="${c.id}">${esc(c.nombre)}${c.activa?"":" (oculta)"}</option>`).join("");
+  $("fl-cat").value = filtroCat;
+  $("fl-todos").classList.toggle("on", filtroTodos);
+
+  const lista = movsFiltrados();
+  const hayFiltro = filtroCat || filtroTexto.trim() || filtroTodos;
+  const totalGas = lista.filter(m=>m.tipo==="Gasto" && m.divisa==="$U").reduce((s,m)=>s+Number(m.monto),0);
+  $("titulo-movs").textContent = "Movimientos · "+lista.length +
+    (hayFiltro && totalGas ? " · "+fmt(totalGas) : "") +
+    (filtroTodos ? " · todos los meses" : "");
+
+  const fecha = m => m.fecha.slice(8,10)+"/"+m.fecha.slice(5,7) + (filtroTodos ? "/"+m.fecha.slice(2,4) : "");
   $("lista-movs").innerHTML = lista.length ? lista.map(m=>`
     <div class="fila">
-      <div class="mono" style="font-size:11.5px; color:var(--gris); min-width:42px;">${m.fecha.slice(8,10)}/${m.fecha.slice(5,7)}</div>
-      <span class="dot" style="background:${m.tipo==="Ingreso"?"var(--verde)":catColor(m.categoria_id)};"></span>
+      <div class="mono" style="font-size:11.5px; color:var(--gris); min-width:42px;">${fecha(m)}</div>
+      <span class="dot" style="background:${m.tipo==="Ingreso"?"var(--verde)":esc(catColor(m.categoria_id))};"></span>
       <div style="flex:1; min-width:0;">
         <div id="cat-${m.id}" style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          ${m.tipo==="Ingreso"?"Ingreso":`<span class="cat-edit" onclick="editarCat('${m.id}')">${esc(catNombre(m.categoria_id))}</span>`}
+          ${m.tipo==="Ingreso"?"Ingreso":`<button class="cat-edit" onclick="editarCat('${m.id}')" title="Cambiar categoría">${esc(catNombre(m.categoria_id))}</button>`}
         </div>
         ${(m.comercio||m.aclaracion)?`<div style="font-size:12px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.comercio||m.aclaracion)}</div>`:""}
       </div>
       <div class="mono" style="font-size:13.5px; font-weight:700; color:${m.tipo==="Ingreso"?"var(--verde)":"var(--tinta)"};">
         ${m.tipo==="Ingreso"?"+":""}${fmt(m.monto, m.divisa)}</div>
-      <button class="x" title="Borrar" onclick="borrar('${m.id}')">×</button>
+      <button class="x editar" title="Editar" aria-label="Editar movimiento" onclick="editarMov('${m.id}')">✎</button>
     </div>`).join("") :
-    `<div style="color:var(--gris); font-size:14px; padding-top:8px;">Sin movimientos en ${mesLabel(mesSel)}.</div>`;
+    `<div style="color:var(--gris); font-size:14px; padding-top:8px;">${hayFiltro
+      ? "Ningún movimiento coincide con el filtro."
+      : "Sin movimientos en "+mesLabel(mesSel)+"."}</div>`;
 }
 
 function kpiHTML(items){
@@ -537,6 +757,9 @@ const ejeY = () => ({ ticks:{ callback:v=>"$"+new Intl.NumberFormat("es-UY").for
   grid:{ color:"#EDEADD" } });
 const legenda = () => ({ position:"bottom", labels:{ boxWidth:10, boxHeight:10,
   font:{ family:"'Archivo'", size:12 } } });
+const tooltipMonto = () => ({ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } });
+/* Manito sobre las barras que se pueden tocar */
+const punteroSiHay = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
 
 function renderDash(){
   if(!hayChart){
@@ -550,89 +773,48 @@ function renderDash(){
 
   const foco = mesFoco;
   const ant = mesAnterior(foco);
+  const esActual = foco===mesKey(hoyISO());
+  const corte = diaCorte(foco);                         // hoy si es el mes actual; 31 si ya cerró
+  const lblCorte = esActual ? ` al día ${corte}` : "";
+  const dm = diasDelMes(foco);
   const meses = mesesTodos.filter(k=>delMes(k).length>0);
   const resPorMes = Object.fromEntries(meses.map(k=>[k, resumenMes(k)]));
-  const rF = resPorMes[foco] || resumenMes(foco);
-  const rA = resPorMes[ant]  || resumenMes(ant);
 
+  const rF = resumenMes(foco, corte);
+  const rA = resumenMes(ant, corte);                    // mes anterior hasta el mismo día
+  const previos = mesesPrevios(foco, 3).filter(k=>delMes(k).length>0);
+  const resPrev = previos.map(k=>resumenMes(k, corte));
+  const promGas = previos.length ? resPrev.reduce((s,r)=>s+r.gas,0)/previos.length : null;
+  const tope = topeTotal();
+
+  /* KPIs */
   const dGas = rA.gas>0 ? (rF.gas-rA.gas)/rA.gas*100 : null;
+  const proy = esActual && corte>=3 ? rF.gas/corte*dm : null;
   const ahorro = rF.ing>0 ? rF.bal/rF.ing*100 : null;
   const topCat = Object.entries(rF.porCat).sort((a,b)=>b[1]-a[1])[0];
+  const kpi2 = esActual ? {
+      l:"Proyección a fin de mes", v: proy!==null ? "~"+fmt(proy) : "—", col:"var(--tinta)",
+      sub: proy===null ? "muy pronto para proyectar"
+         : tope ? (proy>tope ? `te pasarías del tope (${fmt(tope)})` : `dentro del tope (${fmt(tope)})`)
+         : "a este ritmo de gasto",
+      subCol: proy!==null && tope && proy>tope ? "var(--rojo)" : "var(--gris)" }
+    : {
+      l: previos.length===1 ? "Promedio mes previo" : `Promedio ${previos.length||3} meses previos`, v: promGas!==null ? fmt(promGas) : "—", col:"var(--tinta)",
+      sub: promGas ? fmtSigno(rF.gas-promGas)+" este mes" : "sin historial suficiente",
+      subCol: promGas ? (rF.gas>promGas ? "var(--rojo)" : "var(--verde)") : "var(--gris)" };
   $("kpis-dash").innerHTML = kpiHTML([
     {l:"Gastos · "+mesLabel(foco), v:fmt(rF.gas), col:"var(--rojo)",
-     sub: dGas===null?"sin mes anterior":(dGas>=0?"▲ +":"▼ ")+dGas.toFixed(1)+"% vs "+mesLabel(ant),
-     subCol: dGas===null?"var(--gris)":(dGas>=0?"var(--rojo)":"var(--verde)")},
-    {l:"Ingresos", v:fmt(rF.ing), col:"var(--verde)"},
+     sub: dGas===null ? "sin datos del mes anterior" : (dGas>=0?"▲ +":"▼ ")+dGas.toFixed(0)+"% vs "+mesLabel(ant)+lblCorte,
+     subCol: dGas===null ? "var(--gris)" : (dGas>=0 ? "var(--rojo)" : "var(--verde)")},
+    kpi2,
     {l:"Balance", v:(rF.bal>=0?"+":"−")+fmt(Math.abs(rF.bal)), col:rF.bal>=0?"var(--verde)":"var(--rojo)",
-     sub: ahorro===null?"":"tasa de ahorro "+ahorro.toFixed(0)+"%"},
+     sub: "ingresos "+fmt(rF.ing) + (ahorro===null ? "" : " · ahorro "+ahorro.toFixed(0)+"%")},
     {l:"Categoría principal", v: topCat?fmt(topCat[1]):"—", col:"var(--tinta)",
      sub: topCat?esc(catNombre(topCat[0])):"sin gastos"},
   ]);
 
-  $("lbl-dona").textContent = "Distribución · "+mesLabel(foco);
-  $("lbl-comp").textContent = "Categorías: "+mesLabel(foco)+" vs "+mesLabel(ant);
+  /* 1 · Acumulado diario: foco vs anterior, con proyección y tope */
   $("lbl-acum").textContent = "Gasto acumulado día a día · "+mesLabel(foco)+" vs "+mesLabel(ant);
-
-  /* 1 · Barras apiladas por mes y categoría */
-  const catsUsadas = categorias.filter(c=>meses.some(k=>resPorMes[k].porCat[c.id]));
-  mkChart("ch-apilado", {
-    type:"bar",
-    data:{ labels: meses.map(mesLabel),
-      datasets: catsUsadas.map(c=>({
-        label:c.nombre, data: meses.map(k=>resPorMes[k].porCat[c.id]||0),
-        backgroundColor: c.color, borderRadius:3, stack:"g" })) },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend: legenda(),
-        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
-      scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, ...ejeY() } } }
-  });
-
-  /* 2 · Línea ingresos vs gastos */
-  mkChart("ch-flujo", {
-    type:"line",
-    data:{ labels: meses.map(mesLabel),
-      datasets:[
-        { label:"Ingresos", data: meses.map(k=>resPorMes[k].ing),
-          borderColor:VERDE, backgroundColor:VERDE+"22", fill:true, tension:.3, pointRadius:4, borderWidth:2.5 },
-        { label:"Gastos", data: meses.map(k=>resPorMes[k].gas),
-          borderColor:ROJO, backgroundColor:ROJO+"22", fill:true, tension:.3, pointRadius:4, borderWidth:2.5 } ] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend: legenda(),
-        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
-      scales:{ x:{ grid:{display:false} }, y: ejeY() } }
-  });
-
-  /* 3 · Dona distribución del mes en foco */
-  const catsF = Object.entries(rF.porCat).sort((a,b)=>b[1]-a[1]);
-  mkChart("ch-dona", {
-    type:"doughnut",
-    data:{ labels: catsF.map(x=>catNombre(x[0])),
-      datasets:[{ data: catsF.map(x=>x[1]),
-        backgroundColor: catsF.map(x=>catColor(x[0])), borderWidth:2, borderColor:"#fff" }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:"60%",
-      plugins:{ legend: legenda(),
-        tooltip:{ callbacks:{ label: ctx=>{
-          const tot = catsF.reduce((s,x)=>s+x[1],0);
-          return ` ${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/tot*100).toFixed(1)}%)`; } } } } }
-  });
-
-  /* 4 · Barras horizontales: foco vs anterior por categoría */
-  const catsComp = categorias.filter(c=>(rF.porCat[c.id]||0)>0 || (rA.porCat[c.id]||0)>0);
-  mkChart("ch-comp", {
-    type:"bar",
-    data:{ labels: catsComp.map(c=>c.nombre),
-      datasets:[
-        { label: mesLabel(ant), data: catsComp.map(c=>rA.porCat[c.id]||0),
-          backgroundColor:"#D5CFBD", borderRadius:3 },
-        { label: mesLabel(foco), data: catsComp.map(c=>rF.porCat[c.id]||0),
-          backgroundColor:INK, borderRadius:3 } ] },
-    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
-      plugins:{ legend: legenda(),
-        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
-      scales:{ x:{ ...ejeY() }, y:{ grid:{display:false}, ticks:{ font:{ family:"'Archivo'", size:12 } } } } }
-  });
-
-  /* 5 · Acumulado diario foco vs anterior */
   const acum = k => {
     const porDia = {}; let ultimo = 0;
     for(const m of delMes(k)) if(m.tipo==="Gasto"){
@@ -640,32 +822,104 @@ function renderDash(){
       porDia[d] = (porDia[d]||0)+Number(m.monto);
       if(d>ultimo) ultimo = d;
     }
-    const hoy = hoyISO();
-    const tope = Math.max(ultimo, k===mesKey(hoy) ? +hoy.slice(8,10) : ultimo);
+    const hasta = k===mesKey(hoyISO()) ? +hoyISO().slice(8,10) : Math.max(ultimo, diasDelMes(k));
     let s=0; const serie=[];
-    for(let d=1; d<=31; d++){
-      if(d<=tope){ s+=porDia[d]||0; serie.push(s); } else serie.push(null);
+    for(let d=1; d<=dm; d++){
+      if(d<=hasta){ s+=porDia[d]||0; serie.push(s); } else serie.push(null);
     }
     return serie;
   };
+  const serieFoco = acum(foco);
+  const dsAcum = [
+    { label: mesLabel(ant), data: acum(ant), borderColor:"#A9A48E",
+      borderDash:[5,4], pointRadius:0, tension:.2, borderWidth:2 },
+    { label: mesLabel(foco), data: serieFoco, borderColor:INK,
+      pointRadius:0, borderWidth:3, tension:.2 } ];
+  if(proy!==null){
+    const p = Array(dm).fill(null);
+    p[corte-1] = serieFoco[corte-1]; p[dm-1] = proy;
+    dsAcum.push({ label:"Proyección", data:p, borderColor:INK, borderDash:[2,4],
+      pointRadius:0, borderWidth:2, spanGaps:true });
+  }
+  if(tope) dsAcum.push({ label:"Tope total", data:Array(dm).fill(tope), borderColor:ROJO,
+    borderDash:[6,3], pointRadius:0, borderWidth:1.5 });
   mkChart("ch-acum", {
     type:"line",
-    data:{ labels: Array.from({length:31},(_,i)=>i+1),
-      datasets:[
-        { label: mesLabel(ant), data: acum(ant), borderColor:"#A9A48E",
-          borderDash:[5,4], pointRadius:0, tension:.2, borderWidth:2 },
-        { label: mesLabel(foco), data: acum(foco), borderColor:INK,
-          pointRadius:0, borderWidth:3, tension:.2 } ] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend: legenda(),
-        tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
+    data:{ labels: Array.from({length:dm},(_,i)=>i+1), datasets: dsAcum },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+      plugins:{ legend: legenda(), tooltip: tooltipMonto() },
       scales:{ x:{ grid:{display:false}, title:{ display:true, text:"día del mes" } }, y: ejeY() } }
+  });
+
+  /* 2 · ¿Dónde cambió? Diferencia por categoría contra el promedio de los meses previos */
+  const promPorCat = {};
+  for(const r of resPrev) for(const [cid,v] of Object.entries(r.porCat))
+    promPorCat[cid] = (promPorCat[cid]||0) + v/previos.length;
+  const ids = new Set([...Object.keys(rF.porCat), ...Object.keys(promPorCat)]);
+  const deltas = [...ids].map(cid=>[cid, (rF.porCat[cid]||0)-(promPorCat[cid]||0)])
+    .filter(([,d])=>Math.abs(d)>=1).sort((a,b)=>b[1]-a[1]);
+  $("sub-cambio").textContent = !previos.length
+    ? "Hace falta al menos un mes anterior con datos para comparar."
+    : mesLabel(foco)+" vs promedio de "+(previos.length===1 ? mesLabel(previos[0]) : "los "+previos.length+" meses anteriores")+lblCorte+
+      ". Rojo: gastaste más · verde: gastaste menos.";
+  $("box-cambio").style.height = Math.max(160, deltas.length*30+30)+"px";
+  mkChart("ch-cambio", {
+    type:"bar",
+    data:{ labels: deltas.map(x=>catNombre(x[0])),
+      datasets:[{ label:"Diferencia", data: deltas.map(x=>x[1]),
+        backgroundColor: deltas.map(x=>x[1]>0 ? ROJO : VERDE), borderRadius:3 }] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false, onHover: punteroSiHay,
+      onClick:(e, els)=>{ if(els.length) filtrarCat(deltas[els[0].index][0], foco); },
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label: ctx=>{
+          const cid = deltas[ctx.dataIndex][0];
+          return ` ${fmtSigno(ctx.raw)} (este mes ${fmt(rF.porCat[cid]||0)} · promedio ${fmt(promPorCat[cid]||0)})`; } } } },
+      scales:{ x:{ ticks:{ callback:v=>(v>0?"+":"")+"$"+new Intl.NumberFormat("es-UY").format(v) }, grid:{ color:"#EDEADD" } },
+        y:{ grid:{display:false}, ticks:{ font:{ family:"'Archivo'", size:12 } } } } }
+  });
+
+  /* 3 · Ahorro mensual (ingresos − gastos) */
+  mkChart("ch-ahorro", {
+    type:"bar",
+    data:{ labels: meses.map(mesLabel),
+      datasets:[{ label:"Ahorro", data: meses.map(k=>resPorMes[k].bal),
+        backgroundColor: meses.map(k=>resPorMes[k].bal>=0 ? VERDE : ROJO), borderRadius:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, onHover: punteroSiHay,
+      onClick:(e, els)=>{ if(els.length){ mesFoco = meses[els[0].index]; renderDash(); } },
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label: ctx=>{
+          const r = resPorMes[meses[ctx.dataIndex]];
+          return [` Ahorro: ${fmtSigno(r.bal)}`, ` Ingresos: ${fmt(r.ing)}`, ` Gastos: ${fmt(r.gas)}`]; } } } },
+      scales:{ x:{ grid:{display:false} }, y: ejeY() } }
+  });
+
+  /* 4 · Evolución mensual: top 5 categorías + "Otras" */
+  const totalPorCat = {};
+  for(const k of meses) for(const [cid,v] of Object.entries(resPorMes[k].porCat))
+    totalPorCat[cid] = (totalPorCat[cid]||0)+v;
+  const orden = Object.entries(totalPorCat).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  const top = orden.slice(0,5), resto = orden.slice(5);
+  const dsApilado = top.map(cid=>({ label:catNombre(cid), cid,
+    data: meses.map(k=>resPorMes[k].porCat[cid]||0), backgroundColor: catColor(cid), borderRadius:3, stack:"g" }));
+  if(resto.length) dsApilado.push({ label:"Otras", cid:null,
+    data: meses.map(k=>resto.reduce((s,cid)=>s+(resPorMes[k].porCat[cid]||0),0)),
+    backgroundColor:"#C9C4B0", borderRadius:3, stack:"g" });
+  mkChart("ch-apilado", {
+    type:"bar",
+    data:{ labels: meses.map(mesLabel), datasets: dsApilado },
+    options:{ responsive:true, maintainAspectRatio:false, onHover: punteroSiHay,
+      onClick:(e, els)=>{ if(!els.length) return;
+        const { datasetIndex, index } = els[0];
+        filtrarCat(dsApilado[datasetIndex].cid, meses[index]); },
+      plugins:{ legend: legenda(), tooltip: tooltipMonto() },
+      scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, ...ejeY() } } }
   });
 }
 
 /* ─────────── Inicio ─────────── */
 arrancar();
 $("li-pass").addEventListener("keydown", e=>{ if(e.key==="Enter") ingresar(); });
+$("f-monto").addEventListener("keydown", e=>{ if(e.key==="Enter") guardar(); });
 </script>
 </body>
 </html>

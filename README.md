@@ -10,6 +10,8 @@ App personal de seguimiento de gastos con base Postgres en Supabase.
 
 - `index.html` — La app completa (Registro + Comparativas + Categorías). Un solo archivo, sin build.
 - `schema.sql` — Borra las tablas de la versión anterior y crea el modelo nuevo con tus datos de mayo/junio 2026.
+- `migrations/` — Cambios incrementales a la base, en orden de fecha. Se corren una vez en el SQL Editor y no borran datos.
+  - `2026-11-13_presupuestos.sql` — agrega el tope mensual opcional por categoría (necesario para los presupuestos).
 
 ## Instalación
 

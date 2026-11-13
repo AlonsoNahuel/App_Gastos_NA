@@ -65,6 +65,7 @@ a:hover{color:var(--verde);}
 .section-title{font-family:var(--display); font-weight:700; font-size:18px; letter-spacing:-.01em;}
 .label{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.09em;
   color:var(--gris); font-weight:700;}
+label.label{display:block;}
 
 /* ─────────── KPIs: una tarjeta dividida en columnas ─────────── */
 .kpis{background:var(--tarjeta); border:1px solid var(--linea); border-radius:12px; margin-top:18px;
@@ -81,6 +82,14 @@ button{font-family:'Archivo',sans-serif;}
 .btn-tinta{padding:14px; border:none; border-radius:10px; background:var(--tinta); color:var(--lima);
   font-weight:700; font-size:15px; font-family:var(--display); cursor:pointer; transition:background .15s;}
 .btn-tinta:hover{background:#2E401F;}
+.btn-tinta:disabled{opacity:.55; cursor:wait;}
+.btn-borde{padding:14px 20px; border:1px solid var(--tinta); border-radius:10px; background:transparent; color:var(--tinta);
+  font-weight:700; font-size:15px; font-family:var(--display); cursor:pointer;}
+.btn-borrar{padding:14px 20px; border:1px solid var(--rojo); border-radius:10px; background:transparent; color:var(--rojo);
+  font-weight:700; font-size:15px; font-family:var(--display); cursor:pointer;}
+.btn-borrar:hover{background:var(--rojo); color:#fff;}
+.form-acciones{grid-column:1/-1; display:flex; gap:10px; flex-wrap:wrap;}
+.form-acciones .btn-tinta{flex:1; min-width:160px;}
 
 /* ─────────── Formularios ─────────── */
 input,select{width:100%; padding:11px 12px; border:1px solid var(--borde-input); border-radius:8px;
@@ -98,21 +107,39 @@ input[type=color]{padding:3px; height:42px; cursor:pointer; background:#fff;}
 .fila .x{opacity:.35; border:none; background:transparent; color:var(--rojo); font-size:16px;
   padding:2px 6px; cursor:pointer;}
 .fila:hover .x{opacity:1;}
+.fila .editar{color:var(--tinta); opacity:.6; font-size:15px;}
+@media (hover:none){ .fila .x{opacity:.8;} }   /* en el celular no hay hover: botones siempre visibles */
+.fila-cat{padding:12px 2px; flex-wrap:wrap;}
+.fila-cat .cat-nombre{flex:1; min-width:120px;}
+.fila-cat .cat-tope{width:110px; flex:none;}
+
+/* ─────────── Filtros de la lista de movimientos ─────────── */
+.filtros{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;}
+.filtros .chips{grid-column:1/-1;}
+@media (max-width:420px){ .filtros{grid-template-columns:1fr;} }
 .dot{width:10px; height:10px; border-radius:50%; flex:none;}
 
 /* ─────────── Barras por categoría ─────────── */
 .bar-track{height:8px; background:var(--suave); border-radius:4px; overflow:hidden;}
 .bar-fill{height:100%; border-radius:4px;}
+.barra-cat{margin-bottom:14px; cursor:pointer; border-radius:6px;}
+.barra-cat:hover .bar-track{background:#E2DECD;}
+.bar-nota{font-family:var(--mono); font-size:11px; margin-top:4px;}
 
-/* ─────────── Avisos ─────────── */
-.aviso{margin-top:12px; padding:10px 14px; border-radius:8px; background:#F1E1D6; color:var(--rojo);
-  font-size:14px; display:none;}
-.aviso-pend{margin-top:12px; padding:10px 14px; border-radius:8px;
+/* ─────────── Avisos (toast fijo abajo: se ve aunque estés al final de la página) ─────────── */
+.aviso{position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:20;
+  width:max-content; max-width:calc(100% - 32px); padding:12px 16px; border-radius:10px;
+  background:#F1E1D6; color:var(--rojo); font-size:14px; display:none;
+  box-shadow:0 6px 24px rgba(30,42,20,.18);}
+.aviso.ok{background:var(--tinta); color:var(--lima);}
+.aviso-pend{display:block; width:100%; text-align:left; margin-top:12px; padding:10px 14px; border-radius:8px;
   background:color-mix(in srgb, var(--lima) 28%, var(--tarjeta)); border:1px solid var(--lima);
-  color:var(--tinta); font-size:14px;}
+  color:var(--tinta); font-size:14px; font-family:'Archivo',sans-serif;}
+button.aviso-pend{cursor:pointer;}
 
 /* ─────────── Categoría editable en la lista de movimientos ─────────── */
-.cat-edit{cursor:pointer; border-bottom:1px dashed var(--gris); padding-bottom:1px;}
+.cat-edit{cursor:pointer; border:none; background:none; padding:0 0 1px; font:inherit; color:inherit;
+  border-bottom:1px dashed var(--gris); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .cat-edit:hover{border-bottom-color:var(--tinta);}
 
 /* ─────────── Select dentro de una fila (categoría / comercio) ─────────── */
