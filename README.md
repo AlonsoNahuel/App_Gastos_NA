@@ -12,6 +12,12 @@ App personal de seguimiento de gastos con base Postgres en Supabase.
 - `schema.sql` — Borra las tablas de la versión anterior y crea el modelo nuevo con tus datos de mayo/junio 2026.
 - `migrations/` — Cambios incrementales a la base, en orden de fecha. Se corren una vez en el SQL Editor y no borran datos.
   - `2026-11-13_presupuestos.sql` — agrega el tope mensual opcional por categoría (necesario para los presupuestos).
+- `manifest.webmanifest`, `sw.js`, `icons/` — lo que hace a la app instalable (PWA). El service worker guarda la interfaz para abrir rápido y sin red, pero **nunca** guarda datos de Supabase. Si cambiás la lista de archivos en `sw.js`, subí su `VERSION`.
+
+## Instalar en el celular
+
+- **Android (Chrome)**: abrí la página → menú ⋮ → **Instalar app** (o el aviso que aparece abajo). Queda en el cajón de apps como cualquier otra.
+- **iPhone (Safari)**: botón Compartir → **Agregar a inicio**.
 
 ## Instalación
 
